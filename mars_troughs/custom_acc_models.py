@@ -4,6 +4,8 @@
 Created on Fri Jul 23 13:14:58 2021
 
 @author: kris
+# updated to handle retreat instead of lag
+# do we even need splines?
 """
 from abc import abstractmethod
 import numpy as np
@@ -66,7 +68,8 @@ class TimeDependentAccumulationModel(AccumulationModel):
     def get_xt(
         self,
         time: np.ndarray,
-        int_retreat_model_t_spline: np.ndarray,
+        #int_retreat_model_t_spline: np.ndarray,
+        retr: np.ndarray,
         cot_angle,
         csc_angle,
     ):
@@ -83,19 +86,18 @@ class TimeDependentAccumulationModel(AccumulationModel):
             horizontal distances (np.ndarray) of the same size as time input, in
             meters.
         """
-        yt = self.get_yt(time)
-
-        return -cot_angle * yt + csc_angle * (
-            int_retreat_model_t_spline(time) - int_retreat_model_t_spline(0)
-        )
+        yt = self.get_yt(time) # these should both be evaulated at a time time from a spline. 
+        Rt = retr
+        
+        return -cot_angle * yt + csc_angle * Rt # why minus cot?
 
 class Linear_Obliquity(TimeDependentAccumulationModel, LinearModel):
     def __init__(
         self,
         obl_times: np.ndarray,
         obliquity: np.ndarray,
-        constant: float = 1e-6,
-        slope: float = 1e-8,
+        constant: float = 1e-6,# was 1e-6
+        slope: float = 1e-8, # was 1e-8
     ):
         LinearModel.__init__(self, constant, slope)
         super().__init__(obl_times, obliquity)
@@ -246,6 +248,7 @@ class PowerLaw_Obliquity(TimeDependentAccumulationModel, PowerLawModel):
                      -self._int_var_exp_data_spline(0)
                      )
                 )
+    
 class Linear_Insolation(TimeDependentAccumulationModel, LinearModel):
     def __init__(
         self,

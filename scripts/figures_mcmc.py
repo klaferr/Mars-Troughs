@@ -176,8 +176,8 @@ def main():
         #lag, acc rate and y per time for each model ----------------------------
         #indxlagparams=paramsList.index(lagparamsList[0])
         
-        retreatt=np.zeros((nmodels*newmcmc.nwalkers,len(newmcmc.tr.accuModel._times)))
-        lagt=np.zeros((nmodels*newmcmc.nwalkers,len(newmcmc.tr.accuModel._times)))
+        #retreatt=np.zeros((nmodels*newmcmc.nwalkers,len(newmcmc.tr.accuModel._times)))
+        retrt=np.zeros((nmodels*newmcmc.nwalkers,len(newmcmc.tr.accuModel._times)))
         acct=np.zeros((nmodels*newmcmc.nwalkers,len(newmcmc.tr.accuModel._times)))
         tmpt=np.zeros((nmodels*newmcmc.nwalkers,len(newmcmc.tr.accuModel._times),2))
         
@@ -187,13 +187,13 @@ def main():
                 iparams=dict(zip(newmcmc.tr.all_parameter_names,ensemble[i,w,:]))
                 newmcmc.tr.set_model(iparams)
                 
-                retreati=newmcmc.tr.retreat_model_t
-                lagti=newmcmc.tr.lagModel.get_lag_at_t(newmcmc.tr.accuModel._times)
+                #retreati=newmcmc.tr.retreat_model_t
+                retrti=newmcmc.tr.retrModel.get_retreat_at_t(newmcmc.tr.retrModel._times)
                 accti=newmcmc.tr.accuModel.get_accumulation_at_t(newmcmc.tr.accuModel._times)
                 tmpti=np.array(newmcmc.tr.get_trajectory(newmcmc.tr.accuModel._times))
                 
-                retreatt[indxw]=retreati
-                lagt[indxw]=lagti
+                #retreatt[indxw]=retreati
+                retrt[indxw]=retrti
                 acct[indxw]=accti
                 tmpt[indxw,:,:]=tmpti.T
                 indxw=indxw+1
@@ -212,11 +212,14 @@ def main():
         
         #plot retreat rates
         plt.subplot(3,1,1)
-        plt.plot(timesub/1000000,retreatt[:,0::subsample].T*1000,c="gray",
-                                            alpha=0.1, zorder=-1)
-        plt.plot(timesub/1000000,retreatt[indxbest,0::subsample]*1000,c="b")
+        plt.plot(timesub/1000000, 1000*retrt[:, 0::subsample].T, c='gray', alpha=0.1, zorder=-1)
+        plt.plot(timesub/1000000, 1000*retrt[indxbest, 0::subsample], c='b')
+        #plt.plot(timesub/1000000,retreatt[:,0::subsample].T*1000,c="gray",
+        #                                    alpha=0.1, zorder=-1)
+        #plt.plot(timesub/1000000,retreatt[indxbest,0::subsample]*1000,c="b")
         plt.xticks([], [])
         plt.title('R(L(t),t) (mm/year)')
+        plt.ylim((np.min(1000*retrt[indxbest, 0::subsample]), np.max(1000*retrt[indxbest, 0::subsample])))
         
         #plot acct
         plt.subplot(3,1,2)
@@ -225,7 +228,7 @@ def main():
         plt.plot(timesub/1000000,1000*acct[indxbest,0::subsample],c="b")
         plt.title('A(t) (mm/year)')
         plt.xticks([], [])
-
+        plt.ylim((np.min(1000*acct[indxbest,0::subsample]), np.max(1000*acct[indxbest,0::subsample])))
         
         if '_Obliquity_' in newmcmc.modelName:
             #plot obliquity data
@@ -422,3 +425,4 @@ def mainArgs(objpath,plotdir,nmodels,step):
 if __name__ == "__main__":
     main()
     
+

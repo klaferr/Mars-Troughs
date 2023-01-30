@@ -1,5 +1,7 @@
 """
 The trough model.
+
+Edited by Kris Laf. to handle retreat, not lag thickness. Initial changes are just editing names, removing any lag equations not done for accum. 
 """
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
@@ -22,10 +24,10 @@ class Trough(Model):
     Args:
       acc_model (Union[str, Model]): name of the accumulation model
         (linear, quadratic, etc) or a custom model
-      lag_model_name (Union[str, Model]): name of the lag(t) model (constant,
+      retr_model_name (Union[str, Model]): name of the retreat(t) model (constant,
         linear, etc) or a custom model
-      acc_params (List[float]): model parameters for accumulation
-      lag_params (List[float]): model parameters for lag(t)
+      acc_params (List[float]): model parameters for accumulation(t)
+      retr_params (List[float]): model parameters for retreat(t)
       errorbar (float, optional): errorbar of the datapoints in pixels; default=1
       angle (float, optional): south-facing slope angle in degrees. Default is 2.9.
       insolation_path (Union[str, Path], optional): path to the file with
@@ -35,38 +37,40 @@ class Trough(Model):
     def __init__(
         self,
         acc_model: Union[str, Model],
-        lag_model: Union[str, Model],
-        ret_data_spline,
+        retr_model: Union[str, Model],
+       # ret_data_spline,
         errorbar: float = 1.0,
         angle: float = 2.9,
     ):
         """Constructor for the trough object.
         Args:
           acc_model (Model): accumulation submodel
-          lag_model (Model): lag submodel
+          retr_model (Model): retreat submodel
           errorbar (float, optional): errorbar of the datapoints in pixels; default=1
           angle (float, optional): south-facing slope angle in degrees. Default is 2.9.
         """
 
         self.accuModel = acc_model
-        self.lagModel = lag_model
-        self.ret_data_spline=ret_data_spline
+        self.retrModel = retr_model
+        #self.ret_data_spline=ret_data_spline
         self.errorbar = errorbar
         self.angle = angle
         self.meters_per_pixel = np.array([500.0, 20.0])  # meters per pixel
 
         # Call super() with the acc and lag models. This
         # way their parameters are visible here.
-        super().__init__(sub_models=[self.accuModel, self.lagModel])
+        super().__init__(sub_models=[self.accuModel, self.retrModel])
 
         # Calculate the model of retreat of ice per time
-        self.lag_at_t=self.lagModel.get_lag_at_t(self.accuModel._times)
-        self.retreat_model_t = self.ret_data_spline.ev(self.lag_at_t, 
-                                                       self.accuModel._times)
+        #self.retr_at_t=self.retrModel.get_retr_at_t(self.accuModel._times)
+        
+        #self.retreat_model_t = self.ret_data_spline.ev(self.retrModel._times, 
+        #                                               self.accuModel._times)
+        # !! need this back!   hsould this just be a time spline?
 
         # Compute the Retreat(time) spline
-        self.retreat_model_t_spline = IUS(self.accuModel._times, 
-                                          self.retreat_model_t)
+        #self.retreat_model_t_spline = IUS(self.accuModel._times, 
+        #                                  self.retrModel._times)
 
     @property
     def parameter_names(self) -> List[str]:
@@ -87,13 +91,13 @@ class Trough(Model):
         self.all_parameters = all_parameters
 
         # Update the model of retreat of ice per time
-        self.lag_at_t=self.lagModel.get_lag_at_t(self.accuModel._times)
-        self.retreat_model_t = self.ret_data_spline.ev(self.lag_at_t, 
-                                                       self.accuModel._times)
+        #self.lag_at_t=self.lagModel.get_lag_at_t(self.accuModel._times)
+        #self.retreat_model_t = self.ret_data_spline.ev(self.lag_at_t, 
+         #                                              self.accuModel._times)
 
         # Update the Retreat(time) spline
-        self.retreat_model_t_spline = IUS(self.accuModel._times, 
-                                          self.retreat_model_t)
+        #self.retreat_model_t_spline = IUS(self.accuModel._times, 
+        #                                  self.retreat_model_t)
         return
 
     def get_trajectory(
@@ -112,9 +116,11 @@ class Trough(Model):
         """
 
         y = self.accuModel.get_yt(times)
+        r = self.retrModel.get_rt(times)
         x = self.accuModel.get_xt(
             times,
-            self.retreat_model_t_spline.antiderivative(),
+            #self.retreat_model_t_spline.antiderivative(), # why the antideriv?
+            r, 
             self.cot_angle,
             self.csc_angle,
         )

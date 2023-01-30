@@ -3,11 +3,11 @@ import argparse
 import pickle
 import numpy as np
 import mars_troughs as mt
-from mars_troughs import (ConstantLag,
-                          LinearLag,
-                          QuadraticLag,
-                          CubicLag,
-                          PowerLawLag)
+from mars_troughs import (Constant_Retreat, 
+                          Linear_Retreat,
+                          Quadratic_Retreat,
+                          Cubic_Retreat,
+                          PowerLaw_Retreat)
 from mars_troughs import (Linear_Insolation, 
                           Quadratic_Insolation,
                           Cubic_Insolation,
@@ -24,7 +24,7 @@ def main():
         
     p=argparse.ArgumentParser(description='Parse submodel numbers for MCMC')
     p.add_argument("-acc",default=1,type=int,help="Number of the accumulation model")
-    p.add_argument("-lag",default=1,type=int,help="Number of the lag model")
+    p.add_argument("-retr",default=2,type=int,help="Number of the lag model")
     p.add_argument("-steps",default=100,type=int,help="Number of steps for MCMC")
     p.add_argument("-thin_by",default=1,type=int,help="Skip iterations in ensemble")
     p.add_argument("-data", default="insolation",type=str, help="insolation or obliquity")
@@ -42,11 +42,11 @@ def main():
                          3: Cubic_Obliquity,
                          4: PowerLaw_Obliquity }
     
-    lagModel_dict= {  1: ConstantLag,
-                      2: LinearLag,
-                      3: QuadraticLag,
-                      4: CubicLag,
-                      5: PowerLawLag }
+    retrModel_dict= { 1: Constant_Retreat,  
+                      2: Linear_Retreat,
+                      3: Quadratic_Retreat,
+                      4: Cubic_Retreat,
+                      5: PowerLaw_Retreat}
     
     tmp=args.tmp
     
@@ -56,15 +56,18 @@ def main():
         times=-times.astype(float)
         times[0]=1e-10
         acc_model=accModel_ins_dict[args.acc](times,insolations)
+        retr_model=retrModel_dict[args.retr](times, insolations)
     else:
         (obliquity,times) = load_obliquity_data()
         times=-times.astype(float)
         times[0]=1e-10
         acc_model=accModel_obl_dict[args.acc](times, obliquity)
+        retr_model=retrModel_dict[args.retr](times, obliquity)
+
 
     
-    #create lag model
-    lag_model=lagModel_dict[args.lag]()
+    #create retreat model
+    #retr_model=retrModel_dict[args.retr]()
     
     maxSteps=args.steps
     directory= (args.dir + args.data + '/TMP' + str(tmp) + '/')
@@ -76,7 +79,7 @@ def main():
         angle=1.9
     
     thin_by=args.thin_by
-    mcmcobj=mt.MCMC(maxSteps,thin_by,directory,tmp,acc_model,lag_model,
+    mcmcobj=mt.MCMC(maxSteps,thin_by,directory,tmp,acc_model,retr_model,
                     errorbar, angle)
     
     filename=mcmcobj.filename
@@ -87,10 +90,10 @@ def main():
     
     print(filename)
     
-def mainArgs(acc,lag,steps,thin_by,data,tmp,dir):
+def mainArgs(acc,retr,steps,thin_by,data,tmp,dir):
     sys.argv = ['mainInv.py', 
                 '-acc', str(acc),
-                '-lag', str(lag),
+                '-retr', str(retr),
                 '-steps',str(steps),
                 '-thin_by', str(thin_by),
                 '-data', str(data),
@@ -103,3 +106,4 @@ def mainArgs(acc,lag,steps,thin_by,data,tmp,dir):
 if __name__=='__main__':
     #cProfile.run('main()')
     main()
+
