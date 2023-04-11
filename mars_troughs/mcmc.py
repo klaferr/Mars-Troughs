@@ -195,17 +195,15 @@ class MCMC():
             return False
         
         # retreat rate sould be >0
-        retr_t = self.tr.retrModel.get_retreat_at_t(self.tr.retrModel._times)
+        #retr_t = self.tr.retrModel.get_retreat_at_t(self.tr.retrModel._times)
                                                    
-        if any(retr_t < 0):
-            return False
+        #if any(retr_t < 0):
+        #    return False
         
         # keep retreat rate below 20 mm/yr (why? bc we can't control lag thickness)
         if any(self.tr.retrModel.get_retreat_at_t(self.tr.retrModel._times) > (50*10**(-3))):
             return False
-        #lag thickness has to be larger than 1e-15 mm and less than 20 mm
-        #if any(self.tr.lag_at_t  < 1e-15) or any(self.tr.lag_at_t > 20):
-        #    return False
+        
         
         #depth of trough migration points should between 0 and -2 km
         if any(self.tr.ynear < -2e3) or any(self.tr.ynear > 0):
@@ -216,6 +214,9 @@ class MCMC():
                                                     self.tr.accuModel._times)
         if any(acc_t <= 0):
             return False
+        
+        #if any(self.tr.accuModel.get_accumulation_at_t(self.tr.accuModel._times) > (10*10**(-3))):
+        #    return False
         
         #exponent of accumulation, if it exists, should be larger than -3
         if "acc_exponent" in params.keys():

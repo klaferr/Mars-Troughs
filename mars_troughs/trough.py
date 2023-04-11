@@ -38,7 +38,7 @@ class Trough(Model):
         self,
         acc_model: Union[str, Model],
         retr_model: Union[str, Model],
-       # ret_data_spline,
+        #ret_data_spline,
         errorbar: float = 1.0,
         angle: float = 2.9,
     ):
@@ -64,8 +64,8 @@ class Trough(Model):
         # Calculate the model of retreat of ice per time
         #self.retr_at_t=self.retrModel.get_retr_at_t(self.accuModel._times)
         
-        #self.retreat_model_t = self.ret_data_spline.ev(self.retrModel._times, 
-        #                                               self.accuModel._times)
+        #self.retreat_model_t = self.retrModel._times #self.ret_data_spline.ev(self.retrModel._times, 
+                                #                       self.accuModel._times)
         # !! need this back!   hsould this just be a time spline?
 
         # Compute the Retreat(time) spline
@@ -94,10 +94,13 @@ class Trough(Model):
         #self.lag_at_t=self.lagModel.get_lag_at_t(self.accuModel._times)
         #self.retreat_model_t = self.ret_data_spline.ev(self.lag_at_t, 
          #                                              self.accuModel._times)
-
+        #self.retreat_model_t = self.retrModel._times #self.ret_data_spline.ev(self.retrModel._times, 
+                               #                        self.accuModel._times)
+        
         # Update the Retreat(time) spline
         #self.retreat_model_t_spline = IUS(self.accuModel._times, 
         #                                  self.retreat_model_t)
+       
         return
 
     def get_trajectory(
@@ -116,7 +119,8 @@ class Trough(Model):
         """
 
         y = self.accuModel.get_yt(times)
-        r = self.retrModel.get_rt(times)
+        #r = self.retrModel.get_rt(times)
+        r = self.retrModel #_int_var_data_spline
         x = self.accuModel.get_xt(
             times,
             #self.retreat_model_t_spline.antiderivative(), # why the antideriv?

@@ -67,14 +67,24 @@ class TimeDependentRetreatModel(RetreatModel):
         Calculates the accumulation rate at times "time".
 
         Args:
-            time (np.ndarray): times at which we want to calculate A, in years.
+            time (np.ndarray): times at which we want to calculate R, in years.
         Output:
             np.ndarray of the same size as time input containing values of
-            accumulation rates A, in m/year
+            retreat rates R, in m/year
 
         """
+        #re = self.eval(self._var_data_spline(time))
+
+        #if any(re < 0):
+        #    re_masked = np.zeros((np.size(re)))
+        #    mask = re < 0
+        #    re_masked[mask] = 0
+        #    re_masked[~mask] = re[~mask]
+        #    return re_masked
+        #else:
+        #    return re        
         return self.eval(self._var_data_spline(time))
-    
+        
 
     # within acc model, retreat is set (get_xt), using retreat. 
 
@@ -108,8 +118,18 @@ class Constant_Retreat(TimeDependentRetreatModel, ConstantModel):
             the retreat distance r, in meters.
 
         """
+        re = (self.constant * time)
 
-        return (self.constant * time)
+        if any(re < 0):
+            re_masked = np.zeros((np.size(re)))
+            mask = re < 0
+            re_masked[mask] = 0
+            re_masked[~mask] = re[~mask]
+            return re_masked
+        else:
+            return re
+
+        #return (self.constant * time)
               
 
 class Linear_Retreat(TimeDependentRetreatModel, LinearModel):
@@ -138,13 +158,26 @@ class Linear_Retreat(TimeDependentRetreatModel, LinearModel):
 
         """
         # why do we do constant * time, but slppe * spline? test
-        return (
-            self.constant * time
-            + (
-                self.slope
-                * (self._int_var_data_spline(time) - self._int_var_data_spline(0))
-            )
-        )
+        re = (self.constant * time + (self.slope * 
+         (self._int_var_data_spline(time) - self._int_var_data_spline(0))) )
+
+        if any(re < 0):
+            re_masked = np.zeros((np.size(re)))
+            mask = re < 0
+            re_masked[mask] = 0
+            re_masked[~mask] = re[~mask]
+            return re_masked
+        else:
+            return re
+        
+        
+        #return (
+        #    self.constant * time
+        #    + (
+        #        self.slope
+        #        * (self._int_var_data_spline(time) - self._int_var_data_spline(0))
+        #    )
+        #)
     
 
 class Quadratic_Retreat(TimeDependentRetreatModel,QuadModel):

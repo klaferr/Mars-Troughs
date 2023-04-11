@@ -87,7 +87,9 @@ class TimeDependentAccumulationModel(AccumulationModel):
             meters.
         """
         yt = self.get_yt(time) # these should both be evaulated at a time time from a spline. 
-        Rt = retr
+        Rt = retr.get_rt(time) #self.get_rt(time) #retr(time) - retr(0)
+        
+        #Rt = int_retreat_model_t_spline(time) - int_retreat_model_t_spline(0)
         
         return -cot_angle * yt + csc_angle * Rt # why minus cot?
 
