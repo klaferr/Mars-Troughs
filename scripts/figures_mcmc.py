@@ -209,6 +209,9 @@ def main():
         timeaxis=newmcmc.tr.accuModel._times
         timesub=timeaxis[0::subsample]
         
+	# set rereat rate to be zero when negative
+        mask = retrt < 0
+        retrt[mask] = 0
         
         #plot retreat rates
         plt.subplot(3,1,1)
@@ -219,8 +222,9 @@ def main():
         #plt.plot(timesub/1000000,retreatt[indxbest,0::subsample]*1000,c="b")
         plt.xticks([], [])
         plt.title('R(L(t),t) (mm/year)')
-        plt.ylim((np.min(1000*retrt[indxbest, 0::subsample]), np.max(1000*retrt[indxbest, 0::subsample])))
-        
+        #plt.ylim((np.min(1000*retrt[indxbest, 0::subsample]), np.max(1000*retrt[indxbest, 0::subsample])))
+        plt.ylim(-1, np.max(1000*retrt[indxbest, 0::subsample]))
+
         #plot acct
         plt.subplot(3,1,2)
         plt.plot(timesub/1000000,1000*acct[:,0::subsample].T,c="gray",
