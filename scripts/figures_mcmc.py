@@ -180,6 +180,8 @@ def main():
         retrt=np.zeros((nmodels*newmcmc.nwalkers,len(newmcmc.tr.accuModel._times)))
         acct=np.zeros((nmodels*newmcmc.nwalkers,len(newmcmc.tr.accuModel._times)))
         tmpt=np.zeros((nmodels*newmcmc.nwalkers,len(newmcmc.tr.accuModel._times),2))
+        Rt = np.zeros((nmodels*newmcmc.nwalkers,len(newmcmc.tr.accuModel._times)))
+        Yt = np.zeros((nmodels*newmcmc.nwalkers,len(newmcmc.tr.accuModel._times)))
         
         indxw=0
         for i in range(0,nmodels):
@@ -192,10 +194,17 @@ def main():
                 accti=newmcmc.tr.accuModel.get_accumulation_at_t(newmcmc.tr.accuModel._times)
                 tmpti=np.array(newmcmc.tr.get_trajectory(newmcmc.tr.accuModel._times))
                 
+                Rti = newmcmc.tr.retrModel.get_rt(newmcmc.tr.retrModel._times)
+                Yti = newmcmc.tr.accuModel.get_yt(newmcmc.tr.accuModel._times)
+                
                 #retreatt[indxw]=retreati
                 retrt[indxw]=retrti
                 acct[indxw]=accti
                 tmpt[indxw,:,:]=tmpti.T
+                
+                Rt[indxw] = Rti
+                Yt[indxw] = Yti
+                
                 indxw=indxw+1
                 
         #get errorbar 1d
@@ -209,44 +218,87 @@ def main():
         timeaxis=newmcmc.tr.accuModel._times
         timesub=timeaxis[0::subsample]
         
-	# set rereat rate to be zero when negative
-        mask = retrt < 0
-        retrt[mask] = 0
+        # set rereat rate to be zero when negative
+        #mask = retrt < 0
+        #retrt[mask] = 0
         
         #plot retreat rates
-        plt.subplot(3,1,1)
-        plt.plot(timesub/1000000, 1000*retrt[:, 0::subsample].T, c='gray', alpha=0.1, zorder=-1)
-        plt.plot(timesub/1000000, 1000*retrt[indxbest, 0::subsample], c='b')
+        fig = plt.figure(figsize=(6, 6), dpi=300)
+        ax1 = plt.subplot(3,1,1)
+        plt.plot(timesub/1000000, 1000*retrt[:, 0::subsample].T, c='gray', alpha=0.05, zorder=-1)
+        plt.plot(timesub/1000000, 1000*retrt[indxbest, 0::subsample], c='blue')
         #plt.plot(timesub/1000000,retreatt[:,0::subsample].T*1000,c="gray",
         #                                    alpha=0.1, zorder=-1)
         #plt.plot(timesub/1000000,retreatt[indxbest,0::subsample]*1000,c="b")
-        plt.xticks([], [])
-        plt.title('R(L(t),t) (mm/year)')
-        #plt.ylim((np.min(1000*retrt[indxbest, 0::subsample]), np.max(1000*retrt[indxbest, 0::subsample])))
-        plt.ylim(-1, np.max(1000*retrt[indxbest, 0::subsample]))
-
+        ax1.set_xticklabels([])
+        ax1.set_ylabel('R(t) (mm/year)')
+        ax1.set_ylim(-2, 5) #np.max(1000*retrt[:, 0::subsample])) #np.max(1000*retrt[indxbest, 0::subsample]))
+        
+        ax1.minorticks_on()
+        ax1.yaxis.set_tick_params(which='minor', bottom=False)
+        ax1.set_xlim((0, 5))
+        
         #plot acct
-        plt.subplot(3,1,2)
+        ax2 = plt.subplot(3,1,2)
         plt.plot(timesub/1000000,1000*acct[:,0::subsample].T,c="gray",
-                                            alpha=0.1, zorder=-1)
-        plt.plot(timesub/1000000,1000*acct[indxbest,0::subsample],c="b")
-        plt.title('A(t) (mm/year)')
-        plt.xticks([], [])
-        plt.ylim((np.min(1000*acct[indxbest,0::subsample]), np.max(1000*acct[indxbest,0::subsample])))
+                                            alpha=0.05, zorder=-1)
+        plt.plot(timesub/1000000,1000*acct[indxbest,0::subsample],c="red")
+        ax2.set_ylabel('A(t) (mm/year)')
+        ax2.set_xticklabels([])
+        ax2.set_ylim(0, 5) #np.max(1000*acct[:, 0::subsample])) #np.max(1000*acct[indxbest,0::subsample]))
+        
+        ax2.minorticks_on()
+        ax2.yaxis.set_tick_params(which='minor', bottom=False)
+        ax2.set_xlim((0, 5))
         
         if '_Obliquity_' in newmcmc.modelName:
             #plot obliquity data
             data,times =  load_obliquity_data()
-            titledata = 'Obliquity (deg)'
+            titledata = r'Obliquity ($\degree$)'
         else:
             #plot insolation data
             data,times =  load_insolation_data(newmcmc.tmp)
             titledata = 'Insolation (W/m^2)'
         
-        plt.subplot(3,1,3)
-        plt.plot(-1*times/1000000,data)
-        plt.title(titledata)
+        ax3 = plt.subplot(3,1,3)
+        plt.plot(-1*times/1000000,data, c='k')
+        ax3.set_ylabel(titledata)
         plt.xlabel('Time (Myr)')
+        #ax3.tick_params(axis='x', which='minor')
+        ax3.minorticks_on()
+        ax3.yaxis.set_tick_params(which='minor', bottom=False)
+        ax3.set_ylim((10, 45))
+        ax3.set_xlim((0, 5))
+        
+        #ax4 = plt.subplot(5,1,4)
+        #plt.plot(timesub/1000000, Rt[:, 0::subsample].T, c='gray', alpha=0.05, zorder=-1)
+        #plt.plot(timesub/1000000, Rt[indxbest, 0::subsample], c='blue')
+        #plt.plot(timesub/1000000,retreatt[:,0::subsample].T*1000,c="gray",
+        #                                    alpha=0.1, zorder=-1)
+        #plt.plot(timesub/1000000,retreatt[indxbest,0::subsample]*1000,c="b")
+        #ax4.set_xticklabels([])
+        #ax4.set_ylabel('Rt ')
+        #ax4.set_ylim(-1, 3000) #np.max(1000*retrt[:, 0::subsample])) #np.max(1000*retrt[indxbest, 0::subsample]))
+        
+        #ax4.minorticks_on()
+        #ax4.yaxis.set_tick_params(which='minor', bottom=False)
+        #ax4.set_xlim((0, 0.2))
+        
+        #ax5 = plt.subplot(5,1,5)
+        #plt.plot(timesub/1000000, Yt[:, 0::subsample].T, c='gray', alpha=0.05, zorder=-1)
+        #plt.plot(timesub/1000000, Yt[indxbest, 0::subsample], c='blue')
+        #plt.plot(timesub/1000000,retreatt[:,0::subsample].T*1000,c="gray",
+        #                                    alpha=0.1, zorder=-1)
+        #plt.plot(timesub/1000000,retreatt[indxbest,0::subsample]*1000,c="b")
+        #ax4.set_xticklabels([])
+        #ax5.set_ylabel('Yt ')
+        #ax5.set_ylim(-600, 1) #np.max(1000*retrt[:, 0::subsample])) #np.max(1000*retrt[indxbest, 0::subsample]))
+        
+        #ax4.minorticks_on()
+        #ax4.yaxis.set_tick_params(which='minor', bottom=False)
+        #ax5.set_xlim((0, 0.2))
+        
+        fig.tight_layout()
         
         #create folder for saving figure
         if not os.path.exists(args.plotdir+'figures/'+'ar_rates/'):
@@ -257,7 +309,7 @@ def main():
                     facecolor='w',pad_inches=0.1)
         
         # tmp fit ---------------------------------------------------
-        plt.figure()
+        plt.figure(figsize=(6, 6), dpi=250)
         bestTMP=tmpt[indxbest,:,:]
         plt.plot(bestTMP[:,0],bestTMP[:,1],c='b')
         
@@ -286,8 +338,8 @@ def main():
         
         for i in range(nmodels*newmcmc.nwalkers):
             indx=i
-            plt.plot(tmpt[indx,:,0],tmpt[indx,:,1],c="gray", alpha=0.1, zorder=-1)
-        plt.plot(tmpt[indx,:,0],tmpt[indx,:,1],c="gray", alpha=0.1, zorder=-1,label='Ensemble models')
+            plt.plot(tmpt[indx,:,0],tmpt[indx,:,1],c="gray", alpha=0.05, zorder=-1)
+        plt.plot(tmpt[indx,:,0],tmpt[indx,:,1],c="gray", alpha=0.05, zorder=-1,label='Ensemble models')
         
         plt.errorbar(x=xnear, xerr=xerr, y=ynear, yerr=yerr, 
                  c='b', marker='.', ls='', label='Best model')
@@ -297,8 +349,9 @@ def main():
         plt.errorbar(x=newmcmc.xdata, xerr=475, y=newmcmc.ydata, yerr=20, 
                  c='r', marker='.', ls='',label='Observed TMP')
         
-        plt.xlabel("Horizontal dist [m]")
-        plt.ylabel("V. dist [m]")
+        plt.xlabel("Horizontal distance (m)")
+        plt.ylabel("Depth (m)")
+        
         ax=plt.gca()
         ax.legend(bbox_to_anchor=(0.5, -0.3), loc='upper left')
         #ymin,ymax=ax.get_ylim()
@@ -308,11 +361,13 @@ def main():
         ax.set_ylim(ymin,0)
         ax.set_xlim(0,xmax)
         ax.set_box_aspect(ratioyx)
+        ax.minorticks_on()
+        ax.yaxis.set_tick_params(which='minor', bottom=False)
         
         #plot times on upper axis
         ax2=ax.twiny()
         color='m'
-        ax2.set_xlabel('Time before present ( Myr)',color=color)
+        ax2.set_xlabel('Time before present (Myr)',color=color)
         #plt.scatter(xnear,ynear,marker="o",color='b')
         
         ax2.set_ylim(ymin,0)
