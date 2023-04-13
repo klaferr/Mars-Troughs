@@ -119,8 +119,8 @@ class Trough(Model):
         """
 
         y = self.accuModel.get_yt(times)
-        #r = self.retrModel.get_rt(times)
-        r = self.retrModel #_int_var_data_spline
+        r = self.retrModel.get_rt(times)
+        #r = self.retrModel #_int_var_data_spline
         x = self.accuModel.get_xt(
             times,
             #self.retreat_model_t_spline.antiderivative(), # why the antideriv?

@@ -64,7 +64,7 @@ class TimeDependentRetreatModel(RetreatModel):
 
     def get_retreat_at_t(self, time: np.ndarray) -> np.ndarray:
         """
-        Calculates the accumulation rate at times "time".
+        Calculates the retreat rate at times "time".
 
         Args:
             time (np.ndarray): times at which we want to calculate R, in years.
@@ -73,17 +73,22 @@ class TimeDependentRetreatModel(RetreatModel):
             retreat rates R, in m/year
 
         """
+        
+        # what if: this is evaulated so it can be zero based on the negative times,
+        # and then get_rt is set at
+        
         #re = self.eval(self._var_data_spline(time))
+        re = self.eval(self._var_data_spline(time))
+        if np.any(re <0):
+            re_masked = np.zeros((np.size(re)))
+            mask = re <0
+            re_masked[mask] = 0
+            re_masked[~mask] = re[~mask]
+            return re_masked
+        else:
+            return re
 
-        #if any(re < 0):
-        #    re_masked = np.zeros((np.size(re)))
-        #    mask = re < 0
-        #    re_masked[mask] = 0
-        #    re_masked[~mask] = re[~mask]
-        #    return re_masked
-        #else:
-        #    return re        
-        return self.eval(self._var_data_spline(time))
+        #return self.eval(self._var_data_spline(time))
         
 
     # within acc model, retreat is set (get_xt), using retreat. 
@@ -147,7 +152,7 @@ class Linear_Retreat(TimeDependentRetreatModel, LinearModel):
         """
         Calculates the retreat distance r (in m) traveled by a point
         in the center of the high side of the trough. This distance  is a
-        function of the retreat rate A as r(t)=integral(AR(obl(t)), dt) or
+        function of the retreat rate R as r(t)=integral(R(obl(t)), dt) or
         dy/dt=R(obl(t))
 
         Args:
@@ -157,27 +162,59 @@ class Linear_Retreat(TimeDependentRetreatModel, LinearModel):
             the retreat distance r, in meters.
 
         """
-        # why do we do constant * time, but slppe * spline? test
-        re = (self.constant * time + (self.slope * 
-         (self._int_var_data_spline(time) - self._int_var_data_spline(0))) )
+        
+        re = self.eval(self._var_data_spline(time))
 
-        if any(re < 0):
+        if np.any(re <0):
             re_masked = np.zeros((np.size(re)))
             mask = re < 0
             re_masked[mask] = 0
             re_masked[~mask] = re[~mask]
-            return re_masked
+            
+            re_spline = IUS(self._times, re_masked)
+            int_re_spline = re_spline.antiderivative()
+            return (self.constant*time + (self.slope*(int_re_spline(time)-int_re_spline(0))))
         else:
-            return re
-        
-        
-        #return (
+            return (self.constant*time + (self.slope*(self._int_var_data_spline(time)-self._int_var_data_spline(0))))
+            
+
+
+        #return (self.constant*time + (self.slope*(int_re_spline(time)-int_re_spline(0))))
+                                      #(re_int - self._int_var_data_spline(0))))
+    
+        #return -(
         #    self.constant * time
         #    + (
         #        self.slope
         #        * (self._int_var_data_spline(time) - self._int_var_data_spline(0))
         #    )
         #)
+        
+        #re = self._var_data_spline(time)
+
+        #if np.any(self.eval(re) < 0):
+        #    re_masked = np.zeros((np.size(re)))
+        #    mask = self.eval(re) < 0
+        #    re_masked[mask] = 0
+        #    re_masked[~mask] = self.eval(re[~mask])
+            #self._int_var_data_spline(time) = 0 #  = #re.antiderivative()
+        
+        #retreat_t = IUS(self._times, TimeDependentRetreatModel.get_retreat_at_t(self, time))
+        #print(self._int_var_data_spline(0))
+        #if np.any(((self._int_var_data_spline(time)- self._int_var_data_spline(0)))<0):
+        #    print('negatives')
+        #    spline_time = self._int_var_data_spline(time)
+        #    locs = np.argwhere(spline_time  < 0)
+        #    spline_time[locs] = 0
+        
+        
+        # the issue is (time)- 0 gives delta Obl as negatives. 
+        #re = (self.constant * time + (self.slope * (self._int_var_data_spline(time)- self._int_var_data_spline(0))))
+                                      #(self._int_var_data_spline(time)- self._int_var_data_spline(0))))
+                                      #(spline_time - self._int_var_data_spline(0) )))
+              
+           #(self._int_var_data_spline(time) - self._int_var_data_spline(0))) )
+        #return re
     
 
 class Quadratic_Retreat(TimeDependentRetreatModel,QuadModel):

@@ -87,11 +87,16 @@ class TimeDependentAccumulationModel(AccumulationModel):
             meters.
         """
         yt = self.get_yt(time) # these should both be evaulated at a time time from a spline. 
-        Rt = retr.get_rt(time) #self.get_rt(time) #retr(time) - retr(0)
-        
+        #Rt = retr.get_rt(time) #self.get_rt(time) #retr(time) - retr(0)
+
         #Rt = int_retreat_model_t_spline(time) - int_retreat_model_t_spline(0)
         
-        return -cot_angle * yt + csc_angle * Rt # why minus cot?
+        #if np.any(Rt <0):
+        #    print('issue')
+        #if np.all(Rt == 0):
+        #    print('all rt is zero')
+
+        return  cot_angle * (-yt)  + csc_angle * retr 
 
 class Linear_Obliquity(TimeDependentAccumulationModel, LinearModel):
     def __init__(
@@ -126,6 +131,17 @@ class Linear_Obliquity(TimeDependentAccumulationModel, LinearModel):
                 * (self._int_var_data_spline(time) - self._int_var_data_spline(0))
             )
         )
+        
+        #ac = -(self.constant * time + ( self.slope * (self._int_var_data_spline(time) - self._int_var_data_spline(0)) ))
+        
+        #if any(ac > 0):
+        #    ac_masked = np.zeros((np.size(ac)))
+        #    mask = ac > 0
+        #    ac_masked[mask] = 0
+        #    ac_masked[~mask] = ac[~mask]
+        #    return ac_masked
+        #else:
+        #    return ac
 
     
 class Quadratic_Obliquity(TimeDependentAccumulationModel, QuadModel):
