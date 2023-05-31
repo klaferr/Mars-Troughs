@@ -29,7 +29,7 @@ class ConstantModel(Model):
 
     def __init__(self, constant: float = 1.0):
         self.constant = constant
-        super().__init__()
+        #super().__init__()
 
     @property
     def parameter_names(self) -> List[str]:
@@ -56,7 +56,7 @@ class LinearModel(Model):
     def __init__(self, constant: float = 1.0, slope: float = 1.0):
         self.constant = constant
         self.slope = slope
-        super().__init__()
+        #super().__init__()
 
     @property
     def parameter_names(self) -> List[str]:
@@ -87,7 +87,7 @@ class QuadModel(Model):
         self.constant = constant
         self.slope = slope
         self.quad = quad
-        super().__init__()
+        #super().__init__()
 
     @property
     def parameter_names(self) -> List[str]:
@@ -124,7 +124,7 @@ class CubicModel(Model):
         self.slope = slope
         self.quad = quad
         self.cubic = cubic
-        super().__init__()
+        #super().__init__()
 
     @property
     def parameter_names(self) -> List[str]:
@@ -156,7 +156,7 @@ class PowerLawModel(Model):
     ):
         self.coeff=coeff
         self.exponent=exponent
-        super().__init__()
+        #super().__init__()
 
     @property
     def parameter_names(self) -> List[str]:

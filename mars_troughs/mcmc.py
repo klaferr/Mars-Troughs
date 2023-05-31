@@ -31,7 +31,7 @@ class MCMC():
         tmp: int,
         acc_model = Union[str, Model],
         retr_model = Union[str, Model],
-        errorbar = np.sqrt(1.6), #errorbar in pixels on the datapoints
+        #errorbar = np.sqrt(1.6), #errorbar in pixels on the datapoints
         angle= 5.0,
     ):
         self.maxSteps = maxSteps
@@ -57,8 +57,9 @@ class MCMC():
         #ret_data_spline = RBS(lags, retreat_times, retreats)
         
         # Create  trough object 
-        self.tr = mt.Trough(self.acc_model,self.retr_model, #ret_data_spline, 
-                            errorbar,angle)
+        self.tr = mt.Trough(self.acc_model,self.retr_model, angle)
+                            #ret_data_spline, 
+                            #errorbar,angle)
 
                             #ret_data_spline,errorbar,angle)
         
@@ -71,8 +72,8 @@ class MCMC():
         
         #Linear optimization
         
-        guessParams=np.array([errorbar]
-                             +list(self.tr.accuModel.parameters.values())
+        guessParams=np.array(#[errorbar]+
+                             list(self.tr.accuModel.parameters.values())
                              +list(self.tr.retrModel.parameters.values()))
         optObj= op.minimize(self.neg_ln_likelihood, x0=guessParams, 
                             method='Nelder-Mead')
@@ -189,10 +190,10 @@ class MCMC():
     def priors(self,params,times):
         
         #errorbar has to be positive
-        errorbar: float = params["errorbar"]
+        #errorbar: float = params["errorbar"]
         
-        if errorbar < 0: #prior on the variance (i.e. the error bars)
-            return False
+        #if errorbar < 0: #prior on the variance (i.e. the error bars)
+        #    return False
         
         # retreat rate sould be >0
         #retr_t = self.tr.retrModel.get_retreat_at_t(self.tr.retrModel._times)
@@ -201,8 +202,13 @@ class MCMC():
         #    return False
         
         # keep retreat rate below 20 mm/yr (why? bc we can't control lag thickness)
-        if any(self.tr.retrModel.get_retreat_at_t(self.tr.retrModel._times) > (5*10**(-3))):
+        if any(self.tr.retrModel.get_retreat_at_t(self.tr.retrModel._times) > (20*10**(-3))):
             return False
+        
+        #accumulation rate should >=0 (but this does >0)
+        #ret_t=self.tr.retrModel.get_retreat_at_t(self.tr.accuModel._times)
+        #if any(ret_t < 0):
+        #    return False
         
         #accumulation rate should >=0 (but this does >0)
         #ret_t=self.tr.retrModel.get_retreat_at_t(
@@ -215,13 +221,12 @@ class MCMC():
         if any(self.tr.ynear < -2e3) or any(self.tr.ynear > 0):
             return False
         
-        #accumulation rate should >=0 (but this does >0)
-        acc_t=self.tr.accuModel.get_accumulation_at_t(
-                                                    self.tr.accuModel._times)
-        if any(acc_t <= 0):
+        #accumulation rate should >=0 (but this does >0)s
+        acc_t=self.tr.accuModel.get_accumulation_at_t(self.tr.accuModel._times)
+        if any(acc_t < 0):
             return False
         
-        if any(self.tr.accuModel.get_accumulation_at_t(self.tr.accuModel._times) > (3*10**(-3))):
+        if any(self.tr.accuModel.get_accumulation_at_t(self.tr.accuModel._times) > (10*10**(-3))):
             return False
         
         #exponent of accumulation, if it exists, should be larger than -3

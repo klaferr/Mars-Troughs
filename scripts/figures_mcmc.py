@@ -16,6 +16,7 @@ import os
 import glob
 import sys
 from mars_troughs.datapaths import load_insolation_data, load_obliquity_data
+import math
 
 def main():
     p=argparse.ArgumentParser(description="filename for plotting")
@@ -226,29 +227,43 @@ def main():
         fig = plt.figure(figsize=(6, 6), dpi=300)
         ax1 = plt.subplot(3,1,1)
         plt.plot(timesub/1000000, 1000*retrt[:, 0::subsample].T, c='gray', alpha=0.05, zorder=-1)
-        plt.plot(timesub/1000000, 1000*retrt[indxbest, 0::subsample], c='blue')
+        plt.plot(timesub/1000000, 1000*retrt[indxbest, 0::subsample], c='#67a9cf')
+        plt.hlines(0, 0, 5, colors='black', linestyle='dashed')
         #plt.plot(timesub/1000000,retreatt[:,0::subsample].T*1000,c="gray",
         #                                    alpha=0.1, zorder=-1)
         #plt.plot(timesub/1000000,retreatt[indxbest,0::subsample]*1000,c="b")
         ax1.set_xticklabels([])
         ax1.set_ylabel('R(t) (mm/year)')
-        ax1.set_ylim(-2, 5) #np.max(1000*retrt[:, 0::subsample])) #np.max(1000*retrt[indxbest, 0::subsample]))
+       
+        ymax = math.ceil(np.max(1000*retrt[:, 0::subsample]))
+        step = ymax/5
+        #ax1.set_yticks(np.arange(0, ymax+2*step, step))
+        #ax1.set_yticks(np.arange(0, ymax+2*step, step/5), minor=True)
+
+        ax1.set_ylim((-1, ymax+step)) #np.max(1000*retrt[indxbest, 0::subsample]))
         
-        ax1.minorticks_on()
-        ax1.yaxis.set_tick_params(which='minor', bottom=False)
+        ax1.set_xticks(np.arange(0, 5, 0.25), minor=True)
         ax1.set_xlim((0, 5))
         
         #plot acct
         ax2 = plt.subplot(3,1,2)
         plt.plot(timesub/1000000,1000*acct[:,0::subsample].T,c="gray",
                                             alpha=0.05, zorder=-1)
-        plt.plot(timesub/1000000,1000*acct[indxbest,0::subsample],c="red")
+        plt.plot(timesub/1000000,1000*acct[indxbest,0::subsample],c="#d7301f")
+        plt.hlines(0, 0, 5, colors='black', linestyle='dashed')
+
         ax2.set_ylabel('A(t) (mm/year)')
         ax2.set_xticklabels([])
-        ax2.set_ylim(0, 5) #np.max(1000*acct[:, 0::subsample])) #np.max(1000*acct[indxbest,0::subsample]))
         
-        ax2.minorticks_on()
-        ax2.yaxis.set_tick_params(which='minor', bottom=False)
+        ymax = math.ceil(np.max(1000*acct[:, 0::subsample]))
+        step = ymax/5
+        ax2.set_yticks(np.arange(0, ymax+2*step, step))
+        ax2.set_yticks(np.arange(0, ymax+2*step, step/5), minor=True)
+
+        ax2.set_ylim((-1, ymax+step)) #np.max(1000*retrt[indxbest, 0::subsample]))
+         
+        ax2.set_xticks(np.arange(0, 5, 0.25), minor=True)
+
         ax2.set_xlim((0, 5))
         
         if '_Obliquity_' in newmcmc.modelName:
@@ -264,12 +279,21 @@ def main():
         plt.plot(-1*times/1000000,data, c='k')
         ax3.set_ylabel(titledata)
         plt.xlabel('Time (Myr)')
-        #ax3.tick_params(axis='x', which='minor')
-        ax3.minorticks_on()
-        ax3.yaxis.set_tick_params(which='minor', bottom=False)
+
+        ax3.set_yticks(np.arange(10, 45+5, 5))
+        ax3.set_yticks(np.arange(10, 45+1, 1), minor=True)
         ax3.set_ylim((10, 45))
+        
+        ax3.set_xticks(np.arange(0, 5, 0.25), minor=True)
+        
         ax3.set_xlim((0, 5))
         
+        ax1.tick_params(which='both', labelbottom=True, labeltop=False, labelleft=True, labelright=False,
+                             bottom=True, top=True, left=True, right=True, direction='in')
+        ax2.tick_params(which='both', labelbottom=True, labeltop=False, labelleft=True, labelright=False,
+                             bottom=True, top=True, left=True, right=True, direction='in')
+        ax3.tick_params(which='both', labelbottom=True, labeltop=False, labelleft=True, labelright=False,
+                             bottom=True, top=True, left=True, right=True, direction='in')
         #ax4 = plt.subplot(5,1,4)
         #plt.plot(timesub/1000000, Rt[:, 0::subsample].T, c='gray', alpha=0.05, zorder=-1)
         #plt.plot(timesub/1000000, Rt[indxbest, 0::subsample], c='blue')
@@ -311,7 +335,7 @@ def main():
         # tmp fit ---------------------------------------------------
         plt.figure(figsize=(6, 6), dpi=250)
         bestTMP=tmpt[indxbest,:,:]
-        plt.plot(bestTMP[:,0],bestTMP[:,1],c='b')
+        plt.plot(bestTMP[:,0],bestTMP[:,1],c='#02818a')
         
         #get errorbar of best tmp
         bestErrorbar=errorbar1d[indxbest]
@@ -335,19 +359,21 @@ def main():
             
         #plot tmp data and errorbar
         xerr, yerr = bestErrorbar*newmcmc.tr.meters_per_pixel
+        xerr = np.abs(xerr)
+        yerr = np.abs(yerr)
         
         for i in range(nmodels*newmcmc.nwalkers):
             indx=i
-            plt.plot(tmpt[indx,:,0],tmpt[indx,:,1],c="gray", alpha=0.05, zorder=-1)
-        plt.plot(tmpt[indx,:,0],tmpt[indx,:,1],c="gray", alpha=0.05, zorder=-1,label='Ensemble models')
+            plt.plot(tmpt[indx,:,0],tmpt[indx,:,1],c="#bdc9e1", alpha=0.1, zorder=-1)
+        plt.plot(tmpt[indx,:,0],tmpt[indx,:,1],c="#bdc9e1", alpha=1, zorder=-1,label='Ensemble models')
         
         plt.errorbar(x=xnear, xerr=xerr, y=ynear, yerr=yerr, 
-                 c='b', marker='.', ls='', label='Best model')
+                 c='#02818a', marker='.', ls='', label='Best model')
         #plot observed data with errorbars
         #sharad images error: 20 m per pixel vertically and 475 m per pixel
         #horizontally
         plt.errorbar(x=newmcmc.xdata, xerr=475, y=newmcmc.ydata, yerr=20, 
-                 c='r', marker='.', ls='',label='Observed TMP')
+                 c='#d7301f', marker='.', ls='',label='Observed TMP')
         
         plt.xlabel("Horizontal distance (m)")
         plt.ylabel("Depth (m)")
@@ -364,9 +390,12 @@ def main():
         ax.minorticks_on()
         ax.yaxis.set_tick_params(which='minor', bottom=False)
         
+        ax.tick_params(which='both', labelbottom=True, labeltop=False, labelleft=True, labelright=False,
+                             bottom=True, top=True, left=True, right=True, direction='in')
+        
         #plot times on upper axis
         ax2=ax.twiny()
-        color='m'
+        color='#67a9cf'
         ax2.set_xlabel('Time before present (Myr)',color=color)
         #plt.scatter(xnear,ynear,marker="o",color='b')
         
@@ -451,10 +480,20 @@ def main():
             ind = np.argmin(disti)
             ages[w] = newmcmc.tr.accuModel._times[ind]/1000000
             
-        plt.figure()
-        plt.hist(ages,bins=100)
+        plt.figure(figsize=(5,5), dpi=250)
+        plt.hist(ages,bins=100, color="#02818a")
         plt.axvline(x=ages[indxbest],color='k',label='Age best model',
                     linestyle='dashed')
+
+        counts, bins = np.histogram(ages, bins=100)
+        plt.yticks(np.arange(0, round(np.max(counts), -1)+1, 10))
+        plt.yticks(np.arange(0, round(np.max(counts), -1), 2), minor=True)
+        plt.ylim((0, round(np.max(counts), -1)))
+        plt.xticks(np.linspace(0, math.ceil(np.max(ages)), 5))
+        plt.xticks(np.linspace(0, math.ceil(np.max(ages)), 10), minor=True)
+        plt.gca().set_xlim(left=0, right=None)
+        plt.tick_params(which='both', labelbottom=True, labeltop=False, labelleft=True, labelright=False,
+                             bottom=True, top=True, left=True, right=True, direction='in')
         plt.xlabel('Age (Myr)')
         plt.ylabel('# models')
         plt.legend()
@@ -464,6 +503,23 @@ def main():
             os.makedirs(args.plotdir+'figures/'+'age/')
     
         plt.savefig(args.plotdir+'figures/'+'age/'
+                    +newmcmc.modelName+'_'+str(newmcmc.maxSteps)+'.pdf',
+                    facecolor='w',pad_inches=0.1)
+        
+        plt.figure()
+        plt.plot(timesub/1000000, Yt[:, 0::subsample].T, c='gray', alpha=0.05, zorder=-1)
+        plt.plot(timesub/1000000, Yt[indxbest, 0::subsample], c='blue')
+
+        plt.plot(timesub/1000000, Rt[:, 0::subsample].T, c='green', alpha=0.05, zorder=-1)
+        plt.plot(timesub/1000000, Rt[indxbest, 0::subsample], c='red')
+
+
+        plt.ylabel('Yt ')
+        
+        if not os.path.exists(args.plotdir+'figures/'+'Yt/'):
+            os.makedirs(args.plotdir+'figures/'+'Yt/')
+            
+        plt.savefig(args.plotdir+'figures/'+'Yt/'
                     +newmcmc.modelName+'_'+str(newmcmc.maxSteps)+'.pdf',
                     facecolor='w',pad_inches=0.1)
         
@@ -485,3 +541,24 @@ if __name__ == "__main__":
     main()
     
 
+"""
+
+ax["B"].set_xticks(np.arange(0, 350, 50))
+ax["B"].set_xticks(np.arange(0, 350, 10), minor=True)
+ax["B"].set_xlim((0, 300))
+ax["B"].set_xlabel("Distance (km)")
+
+ax["B"].set_yticks(np.arange(-0.08, 0.08, 0.02))
+ax["B"].set_yticks(np.arange(-0.08, 0.08, 0.004), minor=True)
+ax["B"].set_ylim((-0.07, 0.06))
+ax["B"].set_ylabel("dy/dx (m)")
+
+ax["B"].tick_params(which='both', labelbottom=True, labeltop=False, labelleft=True, labelright=False,
+                     bottom=True, top=True, left=True, right=True, direction='in')
+
+
+ax["B"].legend()
+plt.show()
+
+
+"""

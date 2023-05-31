@@ -64,6 +64,11 @@ class TimeDependentAccumulationModel(AccumulationModel):
 
         """
         return self.eval(self._var_data_spline(time))
+        #re = self.eval(self._var_data_spline(time))
+        #if np.any(re <0):
+        #    mask = re < 0
+        #    re[mask] = 0
+        #return re
 
     def get_xt(
         self,
@@ -91,12 +96,21 @@ class TimeDependentAccumulationModel(AccumulationModel):
 
         #Rt = int_retreat_model_t_spline(time) - int_retreat_model_t_spline(0)
         
-        #if np.any(Rt <0):
+        #mask = retr < 0
+        #retr[mask] = 0
+        
+        out = cot_angle * (-yt)  + csc_angle * (retr)
+        #mask = out < 0
+        #out[mask] = 0
+        return out
+            
         #    print('issue')
         #if np.all(Rt == 0):
         #    print('all rt is zero')
+        #if np.any((cot_angle*(-yt) + -csc_angle*retr) < 0):
+        #    print('issue in x')
 
-        return  cot_angle * (-yt)  + csc_angle * retr 
+        #return  cot_angle * (-yt)  + csc_angle * (retr) #(retr(time)-retr(0))#retr 
 
 class Linear_Obliquity(TimeDependentAccumulationModel, LinearModel):
     def __init__(

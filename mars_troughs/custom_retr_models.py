@@ -77,16 +77,19 @@ class TimeDependentRetreatModel(RetreatModel):
         # what if: this is evaulated so it can be zero based on the negative times,
         # and then get_rt is set at
         
-        #re = self.eval(self._var_data_spline(time))
         re = self.eval(self._var_data_spline(time))
+        #re = self.eval(self._var_data_spline(time))
         if np.any(re <0):
-            re_masked = np.zeros((np.size(re)))
-            mask = re <0
-            re_masked[mask] = 0
-            re_masked[~mask] = re[~mask]
-            return re_masked
-        else:
-            return re
+            mask = re < 0
+            re[mask] = 0
+        return re
+        #    re_masked = np.zeros((np.size(re)))
+        #    mask = re <0
+        #    re_masked[mask] = 0
+        #    re_masked[~mask] = re[~mask]
+        #    return re_masked
+        #else:
+        #    return re
 
         #return self.eval(self._var_data_spline(time))
         
@@ -104,9 +107,11 @@ class Constant_Retreat(TimeDependentRetreatModel, ConstantModel):
 
     def __init__(
         self,
+        obl_times: np.ndarray,
+        obliquity: np.ndarray,
         constant: float = 1e-6,
     ):
-        super().__init__()  # note: `super` maps to the LagModel parent class
+        super().__init__(obl_times, obliquity)  # note: `super` maps to the LagModel parent class
         ConstantModel.__init__(self, constant=constant)
 
     def get_rt(self, time: np.ndarray):
@@ -123,18 +128,18 @@ class Constant_Retreat(TimeDependentRetreatModel, ConstantModel):
             the retreat distance r, in meters.
 
         """
-        re = (self.constant * time)
+        #re = (self.constant * time)
 
-        if any(re < 0):
-            re_masked = np.zeros((np.size(re)))
-            mask = re < 0
-            re_masked[mask] = 0
-            re_masked[~mask] = re[~mask]
-            return re_masked
-        else:
-            return re
+        #if any(re < 0):
+        #    re_masked = np.zeros((np.size(re)))
+        #    mask = re < 0
+        #    re_masked[mask] = 0
+        #    re_masked[~mask] = re[~mask]
+        #    return re_masked
+        #else:
+        #    return re
 
-        #return (self.constant * time)
+        return (self.constant * time)
               
 
 class Linear_Retreat(TimeDependentRetreatModel, LinearModel):
@@ -166,16 +171,25 @@ class Linear_Retreat(TimeDependentRetreatModel, LinearModel):
         re = self.eval(self._var_data_spline(time))
 
         if np.any(re <0):
-            re_masked = np.zeros((np.size(re)))
-            mask = re < 0
-            re_masked[mask] = 0
-            re_masked[~mask] = re[~mask]
-            
-            re_spline = IUS(self._times, re_masked)
-            int_re_spline = re_spline.antiderivative()
-            return (self.constant*time + (self.slope*(int_re_spline(time)-int_re_spline(0))))
+            mask = re <= 0
+            re[mask] = 0
+            spline = IUS(self._times, re)
+            int_var_spline = spline.antiderivative()
         else:
-            return (self.constant*time + (self.slope*(self._int_var_data_spline(time)-self._int_var_data_spline(0))))
+            int_var_spline = self._int_var_data_spline
+            
+        return (self.constant*time + (self.slope*(int_var_spline(time)-int_var_spline(0))))
+
+       #     re_masked = np.zeros((np.size(re)))
+       #     mask = re < 0
+       #     re_masked[mask] = 0
+       #     re_masked[~mask] = re[~mask]
+       #     
+       #     re_spline = IUS(self._times, re_masked)
+       #     int_re_spline = re_spline.antiderivative()
+       #     return (self.constant*time + (self.slope*(int_re_spline(time)-int_re_spline(0))))
+        #else:
+        #return (self.constant*time + (self.slope*(self._int_var_data_spline(time)-self._int_var_data_spline(0))))
             
 
 
@@ -244,7 +258,7 @@ class Quadratic_Retreat(TimeDependentRetreatModel,QuadModel):
             the vertical distance y, in meters.
 
         """
-        return (
+        output = (
             self.constant * time
             + (
                 self.slope
@@ -257,6 +271,55 @@ class Quadratic_Retreat(TimeDependentRetreatModel,QuadModel):
                 )
             )
         )
+        
+        #mask = output < 0
+        
+        #output[mask] = 0
+        
+        return output
+            
+        """
+        re = self.eval(self._var_data_spline(time))
+        re2 = self.eval(self._var2_data_spline(time))
+
+        if np.any(re <0):
+            re_masked = np.zeros((np.size(re)))
+            mask = re < 0
+            re_masked[mask] = 0
+            re_masked[~mask] = re[~mask]
+            
+            re_spline = IUS(self._times, re_masked)
+            int_re_spline = re_spline.antiderivative()
+            
+            if np.any(re2 < 0):
+                re2_masked = np.zeros((np.size(re2)))
+                mask = re2 < 0
+                re2_masked[mask] = 0
+                re2_masked[~mask] = re2[~mask]
+                
+                re2_spline = IUS(self._times, re_masked**2)
+                int_re2_spline = re2_spline.antiderivative()
+                
+                return (self.constant*time + (self.slope*(int_re_spline(time)-int_re_spline(0)))
+                    + self.quad * (int_re2_spline(time) - int_re2_spline(0)
+            ))
+
+                
+            else:
+                return (self.constant*time + (self.slope*(int_re_spline(time)-int_re_spline(0)))
+                    + self.quad * (self._int_var2_data_spline(time) - self._int_var2_data_spline(0)
+            ))
+        
+        else:
+            return (self.constant*time + 
+                    (self.slope*(self._int_var_data_spline(time)-self._int_var_data_spline(0))
+                     + self.quad* (self._int_var2_data_spline(time) - self._int_var2_data_spline(0)
+            )))
+          """  
+    
+    
+    
+    
         
 
 class Cubic_Retreat(TimeDependentRetreatModel, CubicModel):
