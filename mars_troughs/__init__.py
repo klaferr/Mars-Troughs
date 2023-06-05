@@ -7,10 +7,14 @@ from .custom_acc_models import (Linear_Obliquity,
                          Cubic_Insolation,
                          PowerLaw_Insolation)
 from .custom_retr_models import (Constant_Retreat, 
-                          Linear_Retreat,
-                         Quadratic_Retreat,
-                         Cubic_Retreat,
-                         PowerLaw_Retreat)
+                          Linear_RetreatO,
+                         Quadratic_RetreatO,
+                         Cubic_RetreatO,
+                         PowerLaw_RetreatO,
+                         Linear_RetreatI, 
+                         Quadratic_RetreatI,
+                         Cubic_RetreatI,
+                         PowerLaw_RetreatI)
 from .datapaths import (DATAPATHS,
                        load_insolation_data, 
                        load_obliquity_data)

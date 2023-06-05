@@ -198,7 +198,6 @@ def main():
                 Rti = newmcmc.tr.retrModel.get_rt(newmcmc.tr.retrModel._times)
                 Yti = newmcmc.tr.accuModel.get_yt(newmcmc.tr.accuModel._times)
                 
-                #retreatt[indxw]=retreati
                 retrt[indxw]=retrti
                 acct[indxw]=accti
                 tmpt[indxw,:,:]=tmpti.T
@@ -219,28 +218,21 @@ def main():
         timeaxis=newmcmc.tr.accuModel._times
         timesub=timeaxis[0::subsample]
         
-        # set rereat rate to be zero when negative
-        #mask = retrt < 0
-        #retrt[mask] = 0
-        
         #plot retreat rates
         fig = plt.figure(figsize=(6, 6), dpi=300)
         ax1 = plt.subplot(3,1,1)
         plt.plot(timesub/1000000, 1000*retrt[:, 0::subsample].T, c='gray', alpha=0.05, zorder=-1)
         plt.plot(timesub/1000000, 1000*retrt[indxbest, 0::subsample], c='#67a9cf')
-        plt.hlines(0, 0, 5, colors='black', linestyle='dashed')
-        #plt.plot(timesub/1000000,retreatt[:,0::subsample].T*1000,c="gray",
-        #                                    alpha=0.1, zorder=-1)
-        #plt.plot(timesub/1000000,retreatt[indxbest,0::subsample]*1000,c="b")
+        plt.hlines(0, 0, 5, colors='black', alpha=0.5, linestyle='dashed')
+
         ax1.set_xticklabels([])
         ax1.set_ylabel('R(t) (mm/year)')
        
         ymax = math.ceil(np.max(1000*retrt[:, 0::subsample]))
         step = ymax/5
-        #ax1.set_yticks(np.arange(0, ymax+2*step, step))
-        #ax1.set_yticks(np.arange(0, ymax+2*step, step/5), minor=True)
-
-        ax1.set_ylim((-1, ymax+step)) #np.max(1000*retrt[indxbest, 0::subsample]))
+        ax1.set_yticks(np.arange(0, ymax+2*step, step))
+        ax1.set_yticks(np.arange(0, ymax+2*step, step/5), minor=True)
+        ax1.set_ylim((-1, ymax+step)) 
         
         ax1.set_xticks(np.arange(0, 5, 0.25), minor=True)
         ax1.set_xlim((0, 5))
@@ -250,7 +242,7 @@ def main():
         plt.plot(timesub/1000000,1000*acct[:,0::subsample].T,c="gray",
                                             alpha=0.05, zorder=-1)
         plt.plot(timesub/1000000,1000*acct[indxbest,0::subsample],c="#d7301f")
-        plt.hlines(0, 0, 5, colors='black', linestyle='dashed')
+        plt.hlines(0, 0, 5, colors='black', alpha=0.5, linestyle='dashed')
 
         ax2.set_ylabel('A(t) (mm/year)')
         ax2.set_xticklabels([])
@@ -260,7 +252,7 @@ def main():
         ax2.set_yticks(np.arange(0, ymax+2*step, step))
         ax2.set_yticks(np.arange(0, ymax+2*step, step/5), minor=True)
 
-        ax2.set_ylim((-1, ymax+step)) #np.max(1000*retrt[indxbest, 0::subsample]))
+        ax2.set_ylim((-1, ymax+step)) 
          
         ax2.set_xticks(np.arange(0, 5, 0.25), minor=True)
 
@@ -280,9 +272,11 @@ def main():
         ax3.set_ylabel(titledata)
         plt.xlabel('Time (Myr)')
 
-        ax3.set_yticks(np.arange(10, 45+5, 5))
-        ax3.set_yticks(np.arange(10, 45+1, 1), minor=True)
-        ax3.set_ylim((10, 45))
+        ymax = math.ceil(np.max(data))
+        step = ymax/5
+        ax3.set_yticks(np.arange(0, ymax+2*step, step))
+        ax3.set_yticks(np.arange(0, ymax+2*step, step/5), minor=True)
+        ax3.set_ylim((0, ymax+step))
         
         ax3.set_xticks(np.arange(0, 5, 0.25), minor=True)
         
@@ -294,34 +288,7 @@ def main():
                              bottom=True, top=True, left=True, right=True, direction='in')
         ax3.tick_params(which='both', labelbottom=True, labeltop=False, labelleft=True, labelright=False,
                              bottom=True, top=True, left=True, right=True, direction='in')
-        #ax4 = plt.subplot(5,1,4)
-        #plt.plot(timesub/1000000, Rt[:, 0::subsample].T, c='gray', alpha=0.05, zorder=-1)
-        #plt.plot(timesub/1000000, Rt[indxbest, 0::subsample], c='blue')
-        #plt.plot(timesub/1000000,retreatt[:,0::subsample].T*1000,c="gray",
-        #                                    alpha=0.1, zorder=-1)
-        #plt.plot(timesub/1000000,retreatt[indxbest,0::subsample]*1000,c="b")
-        #ax4.set_xticklabels([])
-        #ax4.set_ylabel('Rt ')
-        #ax4.set_ylim(-1, 3000) #np.max(1000*retrt[:, 0::subsample])) #np.max(1000*retrt[indxbest, 0::subsample]))
-        
-        #ax4.minorticks_on()
-        #ax4.yaxis.set_tick_params(which='minor', bottom=False)
-        #ax4.set_xlim((0, 0.2))
-        
-        #ax5 = plt.subplot(5,1,5)
-        #plt.plot(timesub/1000000, Yt[:, 0::subsample].T, c='gray', alpha=0.05, zorder=-1)
-        #plt.plot(timesub/1000000, Yt[indxbest, 0::subsample], c='blue')
-        #plt.plot(timesub/1000000,retreatt[:,0::subsample].T*1000,c="gray",
-        #                                    alpha=0.1, zorder=-1)
-        #plt.plot(timesub/1000000,retreatt[indxbest,0::subsample]*1000,c="b")
-        #ax4.set_xticklabels([])
-        #ax5.set_ylabel('Yt ')
-        #ax5.set_ylim(-600, 1) #np.max(1000*retrt[:, 0::subsample])) #np.max(1000*retrt[indxbest, 0::subsample]))
-        
-        #ax4.minorticks_on()
-        #ax4.yaxis.set_tick_params(which='minor', bottom=False)
-        #ax5.set_xlim((0, 0.2))
-        
+
         fig.tight_layout()
         
         #create folder for saving figure
@@ -331,6 +298,9 @@ def main():
         plt.savefig(args.plotdir+'figures/'+'ar_rates/'
                     +newmcmc.modelName+'_'+str(newmcmc.maxSteps)+'.png',
                     facecolor='w',pad_inches=0.1)
+        
+        
+        
         
         # tmp fit ---------------------------------------------------
         plt.figure(figsize=(6, 6), dpi=250)
@@ -522,6 +492,89 @@ def main():
         plt.savefig(args.plotdir+'figures/'+'Yt/'
                     +newmcmc.modelName+'_'+str(newmcmc.maxSteps)+'.pdf',
                     facecolor='w',pad_inches=0.1)
+        
+        # retreat and accumulation with age restricted solutions --------------
+        age_x = max(ages)
+        fig = plt.figure(figsize=(6, 6), dpi=300)
+        ax1 = plt.subplot(3,1,1)
+        plt.plot(timesub/1000000, 1000*retrt[:, 0::subsample].T, c='gray', alpha=0.05, zorder=-1)
+        plt.plot(timesub/1000000, 1000*retrt[indxbest, 0::subsample], c='#67a9cf')
+        plt.hlines(0, 0, 5, colors='black', alpha=0.5, linestyle='dashed')
+        ax1.set_xticklabels([])
+        ax1.set_ylabel('R(t) (mm/year)')
+       
+        ymax = math.ceil(np.max(1000*retrt[:, 0::subsample]))
+        step = ymax/5
+        ax1.set_yticks(np.arange(0, ymax+2*step, step))
+        ax1.set_yticks(np.arange(0, ymax+2*step, step/5), minor=True)
+        ax1.set_ylim((-1, ymax+step)) 
+        
+        # restrict to age limit
+        ax1.set_xticks(np.arange(0, 5, 0.25), minor=True)
+        ax1.set_xlim((0, age_x))
+        
+        #plot acct
+        ax2 = plt.subplot(3,1,2)
+        plt.plot(timesub/1000000,1000*acct[:,0::subsample].T,c="gray",
+                                            alpha=0.05, zorder=-1)
+        plt.plot(timesub/1000000,1000*acct[indxbest,0::subsample],c="#d7301f")
+        plt.hlines(0, 0, 5, colors='black', alpha=0.5, linestyle='dashed')
+
+        ax2.set_ylabel('A(t) (mm/year)')
+        ax2.set_xticklabels([])
+        
+        ymax = math.ceil(np.max(1000*acct[:, 0::subsample]))
+        step = ymax/5
+        ax2.set_yticks(np.arange(0, ymax+2*step, step))
+        ax2.set_yticks(np.arange(0, ymax+2*step, step/4), minor=True)
+
+        ax2.set_ylim((-1, ymax+step)) 
+         
+        ax2.set_xticks(np.arange(0, 5, 0.25), minor=True)
+
+        ax2.set_xlim((0, age_x))
+        
+        if '_Obliquity_' in newmcmc.modelName:
+            #plot obliquity data
+            data,times =  load_obliquity_data()
+            titledata = r'Obliquity ($\degree$)'
+        else:
+            #plot insolation data
+            data,times =  load_insolation_data(newmcmc.tmp)
+            titledata = 'Insolation (W/m^2)'
+        
+        ax3 = plt.subplot(3,1,3)
+        plt.plot(-1*times/1000000,data, c='k')
+        ax3.set_ylabel(titledata)
+        plt.xlabel('Time (Myr)')
+
+        ymax = math.ceil(np.max(data))
+        step = ymax/5
+        ax3.set_yticks(np.arange(0, ymax+2*step, step))
+        ax3.set_yticks(np.arange(0, ymax+2*step, step/5), minor=True)
+        ax3.set_ylim((0, ymax+step))
+        
+        ax3.set_xticks(np.arange(0, 5, 0.25), minor=True)
+        
+        ax3.set_xlim((0, age_x))
+        
+        ax1.tick_params(which='both', labelbottom=True, labeltop=False, labelleft=True, labelright=False,
+                             bottom=True, top=True, left=True, right=True, direction='in')
+        ax2.tick_params(which='both', labelbottom=True, labeltop=False, labelleft=True, labelright=False,
+                             bottom=True, top=True, left=True, right=True, direction='in')
+        ax3.tick_params(which='both', labelbottom=True, labeltop=False, labelleft=True, labelright=False,
+                             bottom=True, top=True, left=True, right=True, direction='in')      
+        
+        fig.tight_layout()
+        
+        #create folder for saving figure
+        if not os.path.exists(args.plotdir+'figures/'+'ar_rates_crop/'):
+            os.makedirs(args.plotdir+'figures/'+'ar_rates_crop/')
+            
+        plt.savefig(args.plotdir+'figures/'+'ar_rates_crop/'
+                    +newmcmc.modelName+'_'+str(newmcmc.maxSteps)+'.png',
+                    facecolor='w',pad_inches=0.1)
+        
         
         plt.close('all')
         print(ifile,file=sys.stderr)

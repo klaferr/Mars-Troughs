@@ -4,10 +4,14 @@ import pickle
 import numpy as np
 import mars_troughs as mt
 from mars_troughs import (Constant_Retreat, 
-                          Linear_Retreat,
-                          Quadratic_Retreat,
-                          Cubic_Retreat,
-                          PowerLaw_Retreat)
+                          Linear_RetreatO,
+                          Quadratic_RetreatO,
+                          Cubic_RetreatO,
+                          PowerLaw_RetreatO)
+from mars_troughs import (Linear_RetreatI, 
+                          Quadratic_RetreatI,
+                          Cubic_RetreatI,
+                          PowerLaw_RetreatI)
 from mars_troughs import (Linear_Insolation, 
                           Quadratic_Insolation,
                           Cubic_Insolation,
@@ -42,11 +46,17 @@ def main():
                          3: Cubic_Obliquity,
                          4: PowerLaw_Obliquity }
     
-    retrModel_dict= { 1: Constant_Retreat,  
-                      2: Linear_Retreat,
-                      3: Quadratic_Retreat,
-                      4: Cubic_Retreat,
-                      5: PowerLaw_Retreat}
+    retrModel_obl_dict= { 1: Constant_Retreat,  
+                      2: Linear_RetreatO,
+                      3: Quadratic_RetreatO,
+                      4: Cubic_RetreatO,
+                      5: PowerLaw_RetreatO}
+    
+    retrModel_ins_dict= { 1: Constant_Retreat, 
+                         2: Linear_RetreatI,
+                         3: Quadratic_RetreatI,
+                         4: Cubic_RetreatI,
+                         5: PowerLaw_RetreatI}
     
     tmp=args.tmp
     
@@ -56,13 +66,13 @@ def main():
         times=-times.astype(float)
         times[0]=1e-10
         acc_model=accModel_ins_dict[args.acc](times,insolations)
-        retr_model=retrModel_dict[args.retr](times, insolations)
+        retr_model=retrModel_ins_dict[args.retr](times, insolations)
     else:
         (obliquity,times) = load_obliquity_data()
         times=-times.astype(float)
         times[0]=1e-10
         acc_model=accModel_obl_dict[args.acc](times, obliquity)
-        retr_model=retrModel_dict[args.retr](times, obliquity)
+        retr_model=retrModel_obl_dict[args.retr](times, obliquity)
 
 
     

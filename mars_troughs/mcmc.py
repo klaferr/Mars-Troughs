@@ -14,7 +14,6 @@ import scipy.optimize as op
 import mars_troughs as mt
 import emcee
 from mars_troughs import (DATAPATHS, Model)
-from scipy.interpolate import RectBivariateSpline as RBS
 import os
 import sys
 
@@ -51,10 +50,6 @@ class MCMC():
         
         self.xdata=self.xdata*1000 #km to m 
         
-        #load retreat data
-        #retreat_times, retreats, lags = load_retreat_data(tmp)
-        #retreat_times=-retreat_times
-        #ret_data_spline = RBS(lags, retreat_times, retreats)
         
         # Create  trough object 
         self.tr = mt.Trough(self.acc_model,self.retr_model, angle)
@@ -195,33 +190,22 @@ class MCMC():
         #if errorbar < 0: #prior on the variance (i.e. the error bars)
         #    return False
         
-        # retreat rate sould be >0
-        #retr_t = self.tr.retrModel.get_retreat_at_t(self.tr.retrModel._times)
-                                                   
-        #if any(retr_t < 0):
-        #    return False
         
         # keep retreat rate below 20 mm/yr (why? bc we can't control lag thickness)
         if any(self.tr.retrModel.get_retreat_at_t(self.tr.retrModel._times) > (20*10**(-3))):
             return False
         
-        #accumulation rate should >=0 (but this does >0)
-        #ret_t=self.tr.retrModel.get_retreat_at_t(self.tr.accuModel._times)
-        #if any(ret_t < 0):
-        #    return False
-        
-        #accumulation rate should >=0 (but this does >0)
-        #ret_t=self.tr.retrModel.get_retreat_at_t(
-        #                                            self.tr.retrModel._times)
-        #if all(ret_t < 0):
-        #    return False
+        #retreat rate should >=0 
+        ret_t=self.tr.retrModel.get_retreat_at_t(self.tr.accuModel._times)
+        if any(ret_t < 0):
+            return False
         
         
         #depth of trough migration points should between 0 and -2 km
         if any(self.tr.ynear < -2e3) or any(self.tr.ynear > 0):
             return False
         
-        #accumulation rate should >=0 (but this does >0)s
+        #accumulation rate should >=0 
         acc_t=self.tr.accuModel.get_accumulation_at_t(self.tr.accuModel._times)
         if any(acc_t < 0):
             return False

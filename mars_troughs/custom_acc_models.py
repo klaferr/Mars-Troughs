@@ -64,16 +64,11 @@ class TimeDependentAccumulationModel(AccumulationModel):
 
         """
         return self.eval(self._var_data_spline(time))
-        #re = self.eval(self._var_data_spline(time))
-        #if np.any(re <0):
-        #    mask = re < 0
-        #    re[mask] = 0
-        #return re
+
 
     def get_xt(
         self,
         time: np.ndarray,
-        #int_retreat_model_t_spline: np.ndarray,
         retr: np.ndarray,
         cot_angle,
         csc_angle,
@@ -91,34 +86,22 @@ class TimeDependentAccumulationModel(AccumulationModel):
             horizontal distances (np.ndarray) of the same size as time input, in
             meters.
         """
-        yt = self.get_yt(time) # these should both be evaulated at a time time from a spline. 
-        #Rt = retr.get_rt(time) #self.get_rt(time) #retr(time) - retr(0)
+        yt = self.get_yt(time) 
 
-        #Rt = int_retreat_model_t_spline(time) - int_retreat_model_t_spline(0)
-        
-        #mask = retr < 0
-        #retr[mask] = 0
         
         out = cot_angle * (-yt)  + csc_angle * (retr)
         #mask = out < 0
         #out[mask] = 0
         return out
-            
-        #    print('issue')
-        #if np.all(Rt == 0):
-        #    print('all rt is zero')
-        #if np.any((cot_angle*(-yt) + -csc_angle*retr) < 0):
-        #    print('issue in x')
 
-        #return  cot_angle * (-yt)  + csc_angle * (retr) #(retr(time)-retr(0))#retr 
 
 class Linear_Obliquity(TimeDependentAccumulationModel, LinearModel):
     def __init__(
         self,
         obl_times: np.ndarray,
         obliquity: np.ndarray,
-        constant: float = 1e-6,# was 1e-6
-        slope: float = 1e-8, # was 1e-8
+        constant: float = 1e-6,
+        slope: float = 1e-8,
     ):
         LinearModel.__init__(self, constant, slope)
         super().__init__(obl_times, obliquity)
@@ -146,16 +129,6 @@ class Linear_Obliquity(TimeDependentAccumulationModel, LinearModel):
             )
         )
         
-        #ac = -(self.constant * time + ( self.slope * (self._int_var_data_spline(time) - self._int_var_data_spline(0)) ))
-        
-        #if any(ac > 0):
-        #    ac_masked = np.zeros((np.size(ac)))
-        #    mask = ac > 0
-        #    ac_masked[mask] = 0
-        #    ac_masked[~mask] = ac[~mask]
-        #    return ac_masked
-        #else:
-        #    return ac
 
     
 class Quadratic_Obliquity(TimeDependentAccumulationModel, QuadModel):
