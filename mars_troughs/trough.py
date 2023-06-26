@@ -54,7 +54,8 @@ class Trough():
         #self.ret_data_spline=ret_data_spline
         self.errorbar = 1 #errorbar
         self.angle = angle
-        self.meters_per_pixel = np.array([475.0, 20.0])  # meters per pixel
+        #self.meters_per_pixel = np.array([475.0, 20.0])  # meters per pixel
+        self.meters_per_pixel = np.array([250.0, 20.0])  # meters per pixel
 
         # Call super() with the acc and lag models. This
         # way their parameters are visible here.

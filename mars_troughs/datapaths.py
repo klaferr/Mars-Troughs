@@ -19,7 +19,9 @@ class _DataPaths:
     INSOLATION2: Path = DATA / "TMP2" / "Insolation_5million_2.txt"
     #RETREAT: Path = DATA / "Retreat_data.txt"
     #RETREAT2: Path = DATA / "TMP2" / "Retreat_data_tmp2.txt"
-    TMP1: Path = DATA / "TMP_xz.txt"
+    #TMP1: Path = DATA / "TMP_xz.txt"
+    TMP1: Path = DATA / "TMP1_3D"/"TMP1_v2_depth_test2_XY_MCMC_desampled.txt"
+
     TMP2: Path = DATA / "TMP2" / "TMP_xz.txt"
     OBLIQUITY: Path = DATA / "Obliquity_5million.txt"
 

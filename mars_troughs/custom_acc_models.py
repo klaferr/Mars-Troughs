@@ -89,7 +89,7 @@ class TimeDependentAccumulationModel(AccumulationModel):
         yt = self.get_yt(time) 
 
         
-        out = cot_angle * (-yt)  + csc_angle * (retr)
+        out = cot_angle * (yt)  + csc_angle * (retr)
         #mask = out < 0
         #out[mask] = 0
         return out
