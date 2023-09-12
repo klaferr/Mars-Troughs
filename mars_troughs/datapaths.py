@@ -17,10 +17,12 @@ class _DataPaths:
     DATA: Path = (Path(__file__) / ".." / "data").resolve()
     INSOLATION1: Path = DATA / "Insolation_5million_1.txt"
     INSOLATION2: Path = DATA / "TMP2" / "Insolation_5million_2.txt"
+    TMP1: Path = DATA / "TMP1_3D" / "TMP1_v2_depth_test2_XY_MCMC_desampled.txt"
+
+    # If using retreat tables:
     #RETREAT: Path = DATA / "Retreat_data.txt"
     #RETREAT2: Path = DATA / "TMP2" / "Retreat_data_tmp2.txt"
     #TMP1: Path = DATA / "TMP_xz.txt"
-    TMP1: Path = DATA / "TMP1_3D"/"TMP1_v2_depth_test2_XY_MCMC_desampled.txt"
 
     TMP2: Path = DATA / "TMP2" / "TMP_xz.txt"
     OBLIQUITY: Path = DATA / "Obliquity_5million.txt"
