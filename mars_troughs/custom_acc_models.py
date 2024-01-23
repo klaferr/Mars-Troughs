@@ -5,7 +5,7 @@ Created on Fri Jul 23 13:14:58 2021
 
 @author: kris
 # updated to handle retreat instead of lag
-# do we even need splines?
+
 """
 from abc import abstractmethod
 import numpy as np
@@ -69,9 +69,10 @@ class TimeDependentAccumulationModel(AccumulationModel):
     def get_xt(
         self,
         time: np.ndarray,
-        retr: np.ndarray,
+        retr: np.ndarray, # previously known as int_retreat_model_t_spline
         cot_angle,
         csc_angle,
+        retrModel
     ):
         """
         Calculates the horizontal distance x (in m) traveled by a point in the
@@ -86,13 +87,19 @@ class TimeDependentAccumulationModel(AccumulationModel):
             horizontal distances (np.ndarray) of the same size as time input, in
             meters.
         """
-        yt = self.get_yt(time) 
-
         
-        out = cot_angle * (yt)  + csc_angle * (retr)
-        #mask = out < 0
-        #out[mask] = 0
-        return out
+        yt = self.get_yt(time)
+
+        if "Lag" in str(retrModel):
+                
+            return -cot_angle * yt + csc_angle * (
+                retr(time) - retr(0)
+            )
+        
+        elif "Retreat" in str(retrModel):  
+            out = cot_angle * (-yt)  + csc_angle * (retr)
+    
+            return out
 
 
 class Linear_Obliquity(TimeDependentAccumulationModel, LinearModel):
@@ -382,7 +389,7 @@ class PowerLaw_Insolation(TimeDependentAccumulationModel, PowerLawModel):
         ins_times: np.ndarray,
         insolations: np.ndarray,
         coeff: float = 0.1,
-        exponent: float = -1,
+        exponent: float = -2,
         ):
         
         PowerLawModel.__init__(self, coeff, exponent)

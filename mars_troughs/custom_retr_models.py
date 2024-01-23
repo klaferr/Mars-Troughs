@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Custom retreat models
-# updated - do we even need splines?
+
 """
 import numpy as np
 from abc import abstractmethod
@@ -36,7 +36,7 @@ class RetreatModel(Model):
             np.ndarray of the same size as time input containing values of retreat.
         """
         #return self.eval(time)
-        raise NotImplementedError # this coems from Acc model
+        raise NotImplementedError # this comes from Acc model
    
 class TimeDependentRetreatModel(RetreatModel):
     """

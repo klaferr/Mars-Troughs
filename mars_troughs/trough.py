@@ -3,14 +3,11 @@ The trough model.
 
 Edited by Kris Laf. to handle retreat, not lag thickness. Initial changes are just editing names, removing any lag equations not done for accum. 
 """
+
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline as IUS
-from mars_troughs.datapaths import (
-    load_insolation_data,
-    load_obliquity_data
-)
 from mars_troughs.model import Model
 
 
@@ -38,9 +35,9 @@ class Trough():
         self,
         acc_model: Union[str, Model],
         retr_model: Union[str, Model],
-        #errorbar: float = 1.0,
-        angle: float = 2.9,
-    ):
+        ret_data_spline,
+        angle: float,
+        ):
         """Constructor for the trough object.
         Args:
           acc_model (Model): accumulation submodel
@@ -50,33 +47,33 @@ class Trough():
         """
 
         self.accuModel = acc_model
-        self.retrModel = retr_model
-        #self.ret_data_spline=ret_data_spline
-        self.errorbar = 1 #errorbar
+        self.errorbar = 1 #error is 1 pixel always
         self.angle = angle
-        #self.meters_per_pixel = np.array([475.0, 20.0])  # meters per pixel
-        self.meters_per_pixel = np.array([250.0, 20.0])  # meters per pixel
 
-        # Call super() with the acc and lag models. This
-        # way their parameters are visible here.
-        #super().__init__(sub_models=[self.accuModel, self.retrModel])
-        self.set_submodels([self.accuModel, self.retrModel])
+        if "Lag" in str(retr_model):
+            self.retrModel = retr_model
+            self.ret_data_spline = ret_data_spline
+            self.angle = angle
+            self.meters_per_pixel = np.array([475.0, 20.0])  # meters per pixel
+           
+            # Set submodels
+            self.set_submodels([self.accuModel, self.retrModel])
 
-        # Calculate the model of retreat of ice per time
-        #self.retr_at_t=self.retrModel.get_retr_at_t(self.accuModel._times)
-        
-        #self.retreat_model_t = self.retrModel._times #self.ret_data_spline.ev(self.retrModel._times, 
-                                #                       self.accuModel._times)
-        # !! need this back!   hsould this just be a time spline?
+            # Calculate the model of retreat of ice per time
+            self.lag_at_t=self.retrModel.get_lag_at_t(self.accuModel._times)
+            self.retreat_model_t = self.ret_data_spline.ev(self.lag_at_t, 
+                                                           self.accuModel._times)
+    
+            # Compute the Retreat(time) spline
+            self.retreat_model_t_spline = IUS(self.accuModel._times, 
+                                              self.retreat_model_t)
+        elif "Retreat" in str(retr_model):
+            self.retrModel = retr_model
+            self.meters_per_pixel = np.array([475.0, 20.0])  # meters per pixel
 
-        # Compute the Retreat(time) spline
-        #self.retreat_model_t_spline = IUS(self.accuModel._times, 
-        #                                  self.retrModel._times)
+            # Set submodels
+            self.set_submodels([self.accuModel, self.retrModel])
 
-    #@property
-    #def parameter_names(self) -> List[str]:
-    #    """Just the errorbar"""
-    #    return ["errorbar"]
 
     def set_model(
         self,
@@ -90,18 +87,16 @@ class Trough():
             all_parameter (Dict[str, float]): new parameters to the models
         """
         self.all_parameters = all_parameters
-
-        # Update the model of retreat of ice per time
-        #self.lag_at_t=self.lagModel.get_lag_at_t(self.accuModel._times)
-        #self.retreat_model_t = self.ret_data_spline.ev(self.lag_at_t, 
-         #                                              self.accuModel._times)
-        #self.retreat_model_t = self.retrModel._times #self.ret_data_spline.ev(self.retrModel._times, 
-                               #                        self.accuModel._times)
-        
-        # Update the Retreat(time) spline
-        #self.retreat_model_t_spline = IUS(self.accuModel._times, 
-        #                                  self.retreat_model_t)
        
+        if "Lag" in str(self.retrModel):
+            # Update the model of retreat of ice per time
+            self.lag_at_t=self.retrModel.get_lag_at_t(self.accuModel._times)
+            self.retreat_model_t = self.ret_data_spline.ev(self.lag_at_t, 
+                                                           self.accuModel._times)
+            
+            # Update the Retreat(time) spline
+            self.retreat_model_t_spline = IUS(self.accuModel._times, 
+                                              self.retreat_model_t)
         return
 
     def get_trajectory(
@@ -118,17 +113,25 @@ class Trough():
         Output:
             x and y coordinates (tuple) of size 2 x len(times) (in m).
         """
-
         y = self.accuModel.get_yt(times)
-        r = self.retrModel.get_rt(times)
-        #r = self.retrModel #_int_var_data_spline
-        x = self.accuModel.get_xt(
-            times,
-            #self.retreat_model_t_spline.antiderivative(), # why the antideriv?
-            r, 
-            self.cot_angle,
-            self.csc_angle,
-        )
+
+        if "Lag" in str(self.retrModel):
+            x = self.accuModel.get_xt(
+                times,
+                self.retreat_model_t_spline.antiderivative(),
+                self.cot_angle,
+                self.csc_angle,
+                self.retrModel
+            )
+        elif "Retreat" in str(self.retrModel):
+            r = self.retrModel.get_rt(times)
+            x = self.accuModel.get_xt(
+                times,
+                r, 
+                self.cot_angle,
+                self.csc_angle,
+                self.retrModel
+            )
 
         return x, y
 

@@ -13,7 +13,9 @@ import numpy as np
 import scipy.optimize as op
 import mars_troughs as mt
 import emcee
-from mars_troughs import (DATAPATHS, Model)
+from mars_troughs import (DATAPATHS, Model, load_retreat_data)
+from mars_troughs import Trough
+from scipy.interpolate import RectBivariateSpline as RBS
 import os
 import sys
 
@@ -24,40 +26,44 @@ class MCMC():
     """
     def __init__(
         self,
+        xdata,
+        ydata,
+        troughObject: Trough,
         maxSteps: int,
         thin_by: int,
         directory: str,
-        tmp: int,
-        acc_model = Union[str, Model],
-        retr_model = Union[str, Model],
-        #errorbar = np.sqrt(1.6), #errorbar in pixels on the datapoints
-        angle= 5.0,
     ):
         self.maxSteps = maxSteps
         self.thin_by = thin_by
-        self.acc_model = acc_model
-        self.retr_model = retr_model
+        self.tr = troughObject
+        #self.acc_model = acc_model
+        #self.retr_model = retr_model
         self.directory = directory
-        self.tmp=tmp
+        #self.tmp=tmp
+        self.xdata = xdata
+        self.ydata = ydata
         
-        #Load data
-        if tmp==1:
-            self.xdata,self.ydata=np.loadtxt(DATAPATHS.TMP1, 
-                                         unpack=True) #Observed TMP data
-        else:
-            self.xdata,self.ydata=np.loadtxt(DATAPATHS.TMP2, 
-                                         unpack=True) #Observed TMP data    
-        
-        self.xdata=self.xdata*1000 #km to m 
-        
-        
-        # Create  trough object 
-        self.tr = mt.Trough(self.acc_model,self.retr_model, angle)
-                            #ret_data_spline, 
-                            #errorbar,angle)
+        if "Lag" in str(self.tr.retrModel):
+            #load retreat data
+            retreat_times, retreats, lags = load_retreat_data(tmp)
+            retreat_times=-retreat_times
+            ret_data_spline = RBS(lags, retreat_times, retreats)
+            
+            # Create trough object 
+            #self.tr = mt.Trough(self.acc_model,self.retr_model,
+            #                    ret_data_spline,angle)
+            
+            guessParams=np.array( list(self.tr.accuModel.parameters.values())
+                     +list(self.tr.retrModel.parameters.values()))
+            
+        elif "Retreat" in str(self.tr.retrModel):
+            # Create  trough object 
+            #self.tr = mt.Trough(self.acc_model,self.retr_model, angle)
 
-                            #ret_data_spline,errorbar,angle)
-        
+            #Linear optimization
+            guessParams=np.array(list(self.tr.accuModel.parameters.values())
+                                 +list(self.tr.retrModel.parameters.values()))
+            
         self.parameter_names = ([key for key in self.tr.all_parameters])
         
         #Find number of dimensions and number of parameters per submodel
@@ -66,10 +72,6 @@ class MCMC():
         
         
         #Linear optimization
-        
-        guessParams=np.array(#[errorbar]+
-                             list(self.tr.accuModel.parameters.values())
-                             +list(self.tr.retrModel.parameters.values()))
         optObj= op.minimize(self.neg_ln_likelihood, x0=guessParams, 
                             method='Nelder-Mead')
         self.optParams=optObj['x']
@@ -77,12 +79,12 @@ class MCMC():
         
         #aux for creating directories
         
-        auxAcc=str(self.acc_model).split(' ')
+        auxAcc=str(self.tr.accuModel).split(' ')
         auxAcc=auxAcc[0]
         self.acc_model_name=auxAcc.split('.')
         self.acc_model_name=self.acc_model_name[2]
             
-        auxRetr=str(self.retr_model).split(' ')
+        auxRetr=str(self.tr.retrModel).split(' ')
         auxRetr=auxRetr[0]
         self.retr_model_name=auxRetr.split('.')
         self.retr_model_name=self.retr_model_name[2]
@@ -95,10 +97,7 @@ class MCMC():
             os.makedirs(self.directory+'obj/')
             
         self.modelName=self.acc_model_name+'_'+self.retr_model_name
-        #if not os.path.exists(self.directory+'obj/'+self.modelName+'/'):
-         #   os.makedirs(self.directory+'obj/'+self.modelName+'/')
     
-        #self.filename=self.directory+'obj/'+self.modelName+'/'+str(self.maxSteps)
         self.filename=self.directory+'obj/'+self.modelName+'_'+str(self.maxSteps)+'obj'
         
         #Set optimized parameter values as initial values of MCMC chains 
@@ -184,33 +183,14 @@ class MCMC():
         
     def priors(self,params,times):
         
-        #errorbar has to be positive
-        #errorbar: float = params["errorbar"]
-        
-        #if errorbar < 0: #prior on the variance (i.e. the error bars)
-        #    return False
-        
-        
-        # keep retreat rate below 20 mm/yr (why? bc we can't control lag thickness)
-        if any(self.tr.retrModel.get_retreat_at_t(self.tr.retrModel._times) > (20*10**(-3))):
-            return False
-        
-        #retreat rate should >=0 
-        ret_t=self.tr.retrModel.get_retreat_at_t(self.tr.accuModel._times)
-        if any(ret_t < 0):
-            return False
-        
-        
         #depth of trough migration points should between 0 and -2 km
         if any(self.tr.ynear < -2e3) or any(self.tr.ynear > 0):
-            return False
+            return False   
         
-        #accumulation rate should >=0 
-        acc_t=self.tr.accuModel.get_accumulation_at_t(self.tr.accuModel._times)
-        if any(acc_t < 0):
-            return False
-        
-        if any(self.tr.accuModel.get_accumulation_at_t(self.tr.accuModel._times) > (10*10**(-3))):
+        #accumulation rate should >0
+        acc_t=self.tr.accuModel.get_accumulation_at_t(
+                                                    self.tr.accuModel._times)
+        if any(acc_t <= 0):
             return False
         
         #exponent of accumulation, if it exists, should be larger than -3
@@ -219,8 +199,30 @@ class MCMC():
             
             if exponent < -3:
                 return False
-        
-        return True
+                 
+        if "Lag" in str(self.tr.retrModel):
+            #lag thickness has to be larger than 1e-15 mm and less than 20 mm
+            if any(self.tr.lag_at_t  < 1e-15) or any(self.tr.lag_at_t > 20):
+                return False
+
+            return True
+    
+        elif "Retreat" in str(self.tr.retrModel):
+                
+            # keep retreat rate below 20 mm/yr (why? bc we can't control lag thickness)
+            if any(self.tr.retrModel.get_retreat_at_t(self.tr.retrModel._times) > (20*10**(-3))):
+                return False
+            
+            # Retreat rate should >= 0 
+            ret_t=self.tr.retrModel.get_retreat_at_t(self.tr.accuModel._times)
+            if any(ret_t < 0):
+                return False
+            
+            # Accumulation has max limit, must be < 10 mm/yr
+            if any(self.tr.accuModel.get_accumulation_at_t(self.tr.accuModel._times) > (10*10**(-3))):
+                return False
+ 
+            return True
         
 
     def ln_likelihood(self,params: Dict[str,float]):

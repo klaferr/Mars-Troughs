@@ -15,50 +15,11 @@ class _DataPaths:
     """
 
     DATA: Path = (Path(__file__) / ".." / "data").resolve()
-    INSOLATION1: Path = DATA / "Insolation_5million_1.txt"
-    INSOLATION2: Path = DATA / "TMP2" / "Insolation_5million_2.txt"
-    #RETREAT: Path = DATA / "Retreat_data.txt"
-    #RETREAT2: Path = DATA / "TMP2" / "Retreat_data_tmp2.txt"
-    #TMP1: Path = DATA / "TMP_xz.txt"
-    TMP1: Path = DATA / "TMP1_3D"/"TMP1_v2_depth_test2_XY_MCMC_desampled.txt"
-
-    TMP2: Path = DATA / "TMP2" / "TMP_xz.txt"
     OBLIQUITY: Path = DATA / "Obliquity_5million.txt"
 
 
 DATAPATHS = _DataPaths()
 """Global object that holds paths."""
-
-""" Load retreat data is commented out, as teh code has been updated to model retreat reate, not lag thickness. 
-"""
-#def load_retreat_data(tmp) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-"""
-    Unpack the retreat data from the Bramson et al. thermal model used
-    to create a bivariate spline. This data is 'static' and so can be
-    loaded in here without respect to the model under consideration.
-
-    Returns:
-      times (np.ndarray): times the lags are measured at
-      retreats (np.ndarray): retreat values in a 2D array of shape
-        `(n_times, n_lags)`
-      lags (np.ndarray): lag values the retreats have been calculated for
-        by default these are [1,2,...15,20] in millimeters
-"""
-#    if tmp==1:
-#        df = pd.read_csv(DATAPATHS.RETREAT)
-#        times: np.ndarray = df["times"].values
-#        lag_cols: List[str] = [col for col in df.columns if col.startswith("lag")]
-#        lags: np.ndarray = np.array([int(col[3:]) for col in lag_cols])
-#        retreats: np.ndarray = df[lag_cols].values.T
-#    else:
-#        df = pd.read_csv(DATAPATHS.RETREAT2)
-#       times: np.ndarray = df["times"].values
-#       lag_cols: List[str] = [col for col in df.columns if col.startswith("lag")]
-#       lags: np.ndarray = np.array([int(col[3:]) for col in lag_cols])
-#       retreats: np.ndarray = df[lag_cols].values.T
-#       
-#    return times, retreats, lags
-
 
 def load_obliquity_data() -> Tuple[np.ndarray, np.ndarray]:
     """
@@ -76,6 +37,31 @@ def load_obliquity_data() -> Tuple[np.ndarray, np.ndarray]:
     return obl, times
 
 
+def load_retreat_data(tmp) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Unpack the retreat data from the Bramson et al. thermal model used
+    to create a bivariate spline. This data is 'static' and so can be
+    loaded in here without respect to the model under consideration.
+
+    Returns:
+      times (np.ndarray): times the lags are measured at
+      retreats (np.ndarray): retreat values in a 2D array of shape
+        `(n_times, n_lags)`
+      lags (np.ndarray): lag values the retreats have been calculated for
+        by default these are [1,2,...15,20] in millimeters
+    """
+    troughFolder = 'TMP'+ str(tmp) + '_3D'
+    RETREAT: Path = DATAPATHS.DATA /troughFolder/"retreat_table.txt"
+
+    df = pd.read_csv(RETREAT)
+    times: np.ndarray = df["times"].values
+    lag_cols: List[str] = [col for col in df.columns if col.startswith("lag")]
+    lags: np.ndarray = np.array([int(col[3:]) for col in lag_cols])
+    retreats: np.ndarray = df[lag_cols].values.T
+
+    return times, retreats, lags
+
+
 def load_insolation_data(tmp) -> Tuple[np.ndarray, np.ndarray]:
     """
     Unpack the insolation data.
@@ -84,21 +70,28 @@ def load_insolation_data(tmp) -> Tuple[np.ndarray, np.ndarray]:
       insolation (np.ndarray): the insolation values
       times (np.ndarray): times the insolation is measured at
     """
-    if tmp==1:
+    troughFolder = 'TMP'+ str(tmp) + '_3D'
+    INSOLATION: Path = DATAPATHS.DATA / troughFolder / "insolation.txt"
         
-        df = pd.read_csv(
-        DATAPATHS.INSOLATION1, names=["insolation", "times"], skiprows=1, sep="\t"
-        )
-    else:
-        df = pd.read_csv(
-        DATAPATHS.INSOLATION2, names=["insolation", "times"], skiprows=1, sep="\t"
+    df = pd.read_csv(INSOLATION1, names=["insolation", "times"], skiprows=1, sep="\t"
         )
     times: np.ndarray = df["times"].values
     ins: np.ndarray = df["insolation"].values
     return ins, times
 
+def load_angle(trslice, tmp) -> Tuple[float]:
+    """
+    Load the trough angle from a file
+    """
 
-def load_TMP_data(tmp) -> Tuple[np.ndarray, np.ndarray]:
+    troughFolder = 'TMP'+ str(tmp) + '_3D'
+    angleFile = "TMP3D_Tr00" + str(tmp) +'_slice00' + str(trslice) + '_angle.txt'
+
+    ANGLE: Path = DATAPATHS.DATA / troughFolder / angleFile 
+    angle = float(np.loadtxt(ANGLE))
+    return angle
+
+def load_TMP_data(trslice, tmp) -> Tuple[np.ndarray, np.ndarray]:
     """
     Loads the TMP data for the trough being investigated now.
 
@@ -106,8 +99,20 @@ def load_TMP_data(tmp) -> Tuple[np.ndarray, np.ndarray]:
       x (np.ndarray): x position in kilometers
       y (np.ndarray): y position in meters
     """
-    if tmp==1:
-        return np.loadtxt(DATAPATHS.TMP1, skiprows=1).T
-    else:
-        return np.loadtxt(DATAPATHS.TMP2, skiprows=1).T
+    troughFolder = 'TMP' + str(tmp) + '_3D'
+    tmpFile = "TMP3D_Tr00" + str(tmp) + '_slice00' + str(trslice) + '.txt'
+
+    TMP: Path = DATAPATHS.DATA/ troughFolder / tmpFile
+    xs, ys = np.loadtxt(TMP, skiprows=1).T
+    return xs*1000, ys
+
+
+    #INSOLATION1: Path = DATA / "Insolation_5million_1.txt"
+    #INSOLATION2: Path = DATA / "TMP2" / "Insolation_5million_2.txt"
+    #RETREAT: Path = DATA / "Retreat_data.txt"
+    #RETREAT2: Path = DATA / "TMP2" / "Retreat_data_tmp2.txt"
+    #TMP1: Path = DATA / "TMP_xz.txt"
+    #TMP1: Path = DATA / "TMP1_3D"/"TMP1_v2_depth_test2_XY_MCMC_desampled.txt"
+    #TMP1: Path = DATA / "TMP1_3D"/"TMP3D_Tr001_slice009.txt"
+    #TMP2: Path = DATA / "TMP2" / "TMP_xz.txt"
 
